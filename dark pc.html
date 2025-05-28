@@ -1,0 +1,2971 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark PC</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden; /* Scrollbar olmasın */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh; /* Minimum ekran yüksekliği */
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/e/e4/Windows_10_Default_Background.jpg');
+            background-size: cover; /* Tüm alanı kaplasın */
+            background-position: center; /* Ortalanmış arka plan */
+            background-repeat: no-repeat; /* Tekrarlamasın */
+            background-attachment: fixed; /* Arka plan sabit kalsın */
+            position: relative; /* Uygulama ikonları için */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Varsayılan font */
+        }
+
+        /* Başlatma Ekranı (Start Screen) */
+        #start-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #00008b; /* Mavi ekran */
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            z-index: 1000;
+        }
+
+        #start-screen h1 {
+            font-size: 5em;
+            margin-bottom: 50px;
+            text-shadow: 4px 4px 10px rgba(0, 0, 0, 0.7);
+        }
+
+        #start-button {
+            padding: 20px 60px;
+            font-size: 2em;
+            background-color: #008000; /* Yeşil buton */
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        #start-button:hover {
+            background-color: #006400;
+            transform: translateY(-3px);
+        }
+        #start-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Yüklenme Ekranı (Loading Screen) - CMD Tarzı */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.98); /* Daha koyu arka plan */
+            color: lime; /* CMD yeşili */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Press Start 2P', cursive; /* Retro font */
+            font-size: 1.5em; /* Biraz küçültüldü */
+            z-index: 1010; /* Başlat ekranının üstünde, masaüstünün altında */
+            display: none; /* Başlangıçta gizli */
+            text-align: center;
+        }
+
+        #loading-text-container {
+            margin-bottom: 20px;
+        }
+
+        #loading-bar-container {
+            width: 80%;
+            max-width: 500px;
+            height: 30px;
+            border: 2px solid lime;
+            background-color: #333;
+            margin-top: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #loading-bar {
+            height: 100%;
+            width: 0%;
+            background-color: lime;
+            transition: width 0.1s linear;
+        }
+
+        #loading-percentage {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            top: 50%;
+            transform: translateY(-50%);
+            color: black; /* Yüzdenin rengi */
+            font-size: 0.8em;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Yüzde için daha okunaklı font */
+        }
+
+        /* Ana Masaüstü İçeriği */
+        #main-desktop {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: none; /* Başlangıçta gizli, başlat ekranından sonra gösterilecek */
+        }
+
+        /* Alt Çubuk (Taskbar) */
+        #taskbar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 40px; /* Daha belirgin bir yükseklik */
+            background-color: rgba(0, 0, 0, 0.8); /* Yarı şeffaf siyah */
+            border-top: 1px solid #333;
+            display: flex;
+            justify-content: flex-end; /* İçeriği sağa hizala */
+            align-items: center;
+            padding: 0 15px; /* Yanlardan boşluk */
+            box-sizing: border-box; /* Padding dahil genişlik */
+            z-index: 999; /* En üstte olsun ama başlat ekranının altında */
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 0.9em;
+        }
+
+        #current-time {
+            padding: 5px 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            margin-left: 10px; /* Saatin solunda boşluk */
+        }
+
+        /* CMD Penceresi */
+        #cmd-window {
+            width: 90vw;
+            height: 90vh;
+            max-width: 1200px;
+            max-height: 800px;
+            background-color: #000000;
+            color: lime;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.1em;
+            border: 1px solid #3A3A3A;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            resize: both;
+            overflow: hidden;
+            position: relative;
+            display: none; /* Başlangıçta gizli */
+            left: 50%; /* Ortala */
+            top: 50%;
+            transform: translate(-50%, -50%); /* Ortala */
+        }
+
+        #title-bar {
+            background-color: #323232;
+            color: #FFFFFF;
+            padding: 8px 12px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 0.9em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #505050;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            cursor: default;
+        }
+
+        #title-text {
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+
+        #window-controls {
+            display: flex;
+            gap: 1px;
+        }
+
+        .control-button {
+            width: 45px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #FFFFFF;
+            font-size: 1.2em;
+            cursor: default;
+            transition: background-color 0.1s ease;
+        }
+        .control-button:hover {
+            background-color: #404040;
+        }
+        #close-button:hover {
+            background-color: #E81123;
+        }
+        #close-button {
+            color: white;
+        }
+        #minimize-button::after { content: '\2014'; }
+        #maximize-button::after { content: '\25A1'; }
+        #close-button::after { content: '\2715'; }
+
+        #content {
+            flex-grow: 1;
+            padding: 10px 20px;
+            overflow-y: auto;
+            word-break: break-all;
+            white-space: pre-wrap;
+            position: relative;
+        }
+
+        #initial-message {
+            /* Başlangıçta görünür, spam başlayınca gizlenir */
+            font-size: 1.3em;
+            color: lime;
+            text-align: left;
+            z-index: 10;
+            margin-bottom: 5px;
+        }
+
+        #output {
+            /* Bu div sadece oyun başladıktan sonra görünür olacak */
+        }
+
+        .command-line { /* Yeni eklendi */
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+
+        .command-line .prompt { /* Yeni eklendi */
+            color: lime;
+            margin-right: 5px;
+        }
+
+        .cmd-input { /* Yeni eklendi */
+            flex-grow: 1;
+            background: none;
+            border: none;
+            color: lime;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.1em;
+            outline: none;
+            display: none; /* Başlangıçta gizli */
+        }
+
+        #kill-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            font-size: 3em;
+            font-weight: bold;
+            color: red;
+            display: none;
+            text-shadow: 0 0 10px red, 0 0 20px red, 0 0 30px red, 0 0 40px red;
+            animation: pulse 1.5s infinite alternate;
+            z-index: 10;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        /* Uygulama İkonları Konteyneri (Ana Ekran) */
+        #app-icons-container {
+            position: absolute;
+            top: 20px; /* Sağ üst köşe */
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end; /* Sağ tarafa hizala */
+            z-index: 100; /* CMD penceresinin üstünde olsun */
+            gap: 15px; /* İkonlar arası boşluk */
+        }
+
+        .app-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            text-align: center;
+            color: white; /* İkon metinlerinin rengi */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 0.85em;
+        }
+
+        .app-icon-img {
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3em;
+            color: white;
+            font-weight: bold;
+            line-height: 0.8;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .app-icon-img:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.6);
+        }
+
+        /* Dark PC İkonu (Eski Dark CMD) */
+        #dark-pc-icon .app-icon-img {
+            background-color: #000000; /* Siyah */
+            border: 2px solid #0f0; /* Yeşil çerçeve */
+            font-size: 1.5em; /* Metnin büyüklüğü */
+            line-height: 1;
+        }
+        #dark-pc-icon .app-icon-img::before {
+            content: 'CMD'; /* CMD yazısı */
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        /* Xbox İkonu */
+        #xbox-icon .app-icon-img {
+            background-color: #107C10; /* Xbox yeşili */
+        }
+        #xbox-icon .app-icon-img::before {
+            content: 'X'; /* Basit bir X logosu */
+        }
+
+        /* Parkur Oyunu İkonu */
+        #parkour-game-icon .app-icon-img {
+            background-color: #8B4513; /* Kahverengi (Toprak rengi gibi) */
+            font-size: 2em;
+        }
+        #parkour-game-icon .app-icon-img::before {
+            content: '🏃'; /* Koşan adam emojisi */
+        }
+
+        /* Parçacık Çözücü İkonu */
+        #particle-solver-icon .app-icon-img {
+            background-color: #00BFFF; /* Açık mavi */
+            font-size: 2em;
+        }
+        #particle-solver-icon .app-icon-img::before {
+            content: '🧩'; /* Yapboz parçası emojisi */
+        }
+
+        /* Labirent Oyunu İkonu */
+        #maze-game-icon .app-icon-img {
+            background-color: #6a0dad; /* Mor bir pusula ikonu */
+            font-size: 2em; /* Emojinin büyüklüğü */
+        }
+        #maze-game-icon .app-icon-img::before {
+            content: '🧭'; /* Pusula emojisi */
+        }
+
+        /* Hacker Kaçış İkonu */
+        #hacker-escape-icon .app-icon-img {
+            background-color: #555; /* Gri tonu */
+            font-size: 2em;
+        }
+        #hacker-escape-icon .app-icon-img::before {
+            content: '👮'; /* Polis emojisi */
+        }
+
+        /* Paint İkonu */
+        #paint-icon .app-icon-img {
+            background-color: #B0B0B0; /* Açık gri */
+            font-size: 2em;
+            color: #333;
+        }
+        #paint-icon .app-icon-img::before {
+            content: '🎨'; /* Sanat paleti emojisi */
+        }
+
+        /* Not Defteri İkonu */
+        #notepad-icon .app-icon-img {
+            background-color: #F0F0F0; /* Beyaz */
+            font-size: 2em;
+            color: #333;
+        }
+        #notepad-icon .app-icon-img::before {
+            content: '📝'; /* Not defteri emojisi */
+        }
+
+        /* Kart Oyunu İkonu */
+        #card-game-icon .app-icon-img {
+            background-color: #7B3F00; /* Kahverengi/Koyu turuncu */
+            font-size: 2em;
+            color: white;
+        }
+        #card-game-icon .app-icon-img::before {
+            content: '🃏'; /* Joker kartı emojisi */
+        }
+
+
+        /* Modallar (Uygulama Pencereleri) Ortak Stilleri */
+        .modal-window {
+            position: absolute;
+            background-color: #2F2F2F; /* Koyu gri */
+            border: 1px solid #555;
+            border-radius: 8px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.8);
+            display: none; /* Başlangıçta gizli */
+            flex-direction: column;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #E0E0E0;
+            overflow: hidden; /* İçerik taşmasını engelle */
+            z-index: 110; /* CMD penceresinin üstünde olsun, özel durumlarda değişebilir */
+        }
+
+        .modal-window .title-bar { /* Modalların başlık çubukları için genel stil */
+            background-color: #1E1E1E;
+            padding: 10px;
+            border-bottom: 1px solid #444;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            color: #C0C0C0;
+            cursor: grab; /* Taşıma imleci */
+            user-select: none;
+        }
+
+        .modal-window .title-bar .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2em;
+            cursor: pointer;
+            padding: 0 5px;
+            transition: background-color 0.1s ease;
+        }
+        .modal-window .title-bar .close-btn:hover {
+            background-color: #E81123;
+        }
+
+        /* Xbox Sohbet Penceresi */
+        #xbox-chat-window {
+            width: 350px;
+            height: 400px;
+            top: 100px;
+            right: 20px;
+        }
+
+        #chat-messages {
+            flex-grow: 1;
+            padding: 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 8px 12px;
+            border-radius: 15px;
+        }
+
+        .message.you {
+            background-color: #0078D7; /* Mavi (Windows rengi) */
+            align-self: flex-end;
+            text-align: right;
+            color: white;
+        }
+
+        .message.coolplayer {
+            background-color: #3A3A3A; /* Koyu gri */
+            align-self: flex-start;
+            text-align: left;
+            color: #E0E0E0;
+        }
+        #chat-input-container {
+            padding: 10px;
+            border-top: 1px solid #444;
+            display: flex;
+        }
+
+        #chat-input {
+            flex-grow: 1;
+            padding: 8px;
+            border: 1px solid #555;
+            border-radius: 5px;
+            background-color: #3A3A3A;
+            color: #E0E0E0;
+            outline: none;
+        }
+        #chat-input::placeholder {
+            color: #A0A0A0;
+        }
+
+        #send-button {
+            background-color: #107C10;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        #send-button:hover {
+            background-color: #0A5A0A;
+        }
+
+        /* Çökme Mesaj Kutusu (Xbox Penceresi Üstünde) */
+        #crash-message-box {
+            width: 300px;
+            /* Modal konumlandırma için modal-window'dan devralıyor */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #222; /* Koyu arka plan */
+            text-align: center;
+            padding: 20px;
+            z-index: 120; /* Sohbet penceresinin üstünde */
+        }
+        #crash-message-box h2 {
+            color: red;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        #crash-message-box p {
+            margin-bottom: 20px;
+        }
+        #crash-message-box button {
+            background-color: #0078D7;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.2s ease;
+        }
+        #crash-message-box button:hover {
+            background-color: #005A9C;
+        }
+
+        /* Parkur Oyunu Modal'ı (Tam Ekran) */
+        #parkour-game-modal {
+            position: fixed; /* Tüm ekranı kaplasın */
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.9); /* Yarı şeffaf siyah arka plan */
+            justify-content: center;
+            align-items: center;
+            z-index: 200; /* Her şeyin üstünde olsun */
+            border: none; /* Modal penceresi özelliği olmasın */
+            border-radius: 0;
+            box-shadow: none;
+            display: none; /* Başlangıçta gizli */
+        }
+
+        #game-container {
+            position: relative;
+            background-color: #333;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            width: 800px; /* Oyun alanını büyüttük */
+            height: 500px; /* Oyun alanını büyüttük */
+        }
+
+        #game-canvas {
+            background-color: #87CEEB; /* Gökyüzü mavisi */
+            border: 2px solid #555;
+            display: block; /* Altında boşluk kalmasın */
+            width: 100%;
+            height: calc(100% - 40px); /* Kalan alanı kapla, butonlar için 40px boşluk */
+        }
+
+        #game-controls {
+            display: flex;
+            gap: 10px;
+        }
+        #game-controls button {
+            background-color: #0078D7;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.2s ease;
+        }
+        #game-controls button:hover {
+            background-color: #005A9C;
+        }
+        #close-game-btn {
+            background-color: #E81123;
+        }
+        #close-game-btn:hover {
+            background-color: #B00000;
+        }
+
+        /* 999 Hata Ekranı (modal) */
+        #nine-nine-nine-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: red; /* Kırmızı arka plan */
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            z-index: 999; /* En üstte olsun */
+            font-size: 10em; /* "999" yazısının boyutu */
+            font-weight: bold;
+            text-shadow: 0 0 20px black;
+            border: none; /* Modal penceresi özelliği olmasın */
+            border-radius: 0;
+            box-shadow: none;
+            display: none; /* Başlangıçta gizli */
+        }
+        #nine-nine-nine-modal img {
+            max-width: 80%; /* Resmin ekranı kaplaması */
+            max-height: 80%;
+            object-fit: contain; /* Resmin oranını koru */
+            border: 5px solid white; /* Beyaz çerçeve */
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            margin-bottom: 20px; /* Alttan boşluk */
+            display: block; /* Başlangıçta gizli olsa da blok olarak kalsın */
+        }
+        #nine-nine-nine-modal #nine-nine-nine-text {
+            display: none; /* Resim varsa metin gizli olsun */
+        }
+        #nine-nine-nine-modal .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 3em;
+            cursor: pointer;
+            text-shadow: 0 0 10px black;
+            transition: color 0.2s ease;
+        }
+        #nine-nine-nine-modal .close-btn:hover {
+            color: #E81123;
+        }
+
+
+        /* Parçacık Çözücü Uygulama Penceresi */
+        #particle-solver-window {
+            width: 600px; /* Genişlik */
+            height: 400px; /* Yükseklik */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            resize: both; /* Yeniden boyutlandırılabilir */
+            min-width: 400px; /* Minimum boyut */
+            min-height: 300px;
+            z-index: 250; /* Oyun modalının üstünde olsun */
+            display: none; /* Başlangıçta gizli */
+        }
+
+        #particle-solver-content {
+            flex-grow: 1;
+            display: flex;
+            padding: 10px;
+            gap: 15px;
+        }
+
+        #particle-solver-output {
+            flex: 1; /* Sol taraf */
+            background-color: #1A1A1A;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 10px;
+            font-size: 1em;
+            color: lime; /* Gizli mesaj lime yeşili olsun */
+            overflow-y: auto;
+            white-space: pre-wrap; /* Satır sonlarını koru */
+            box-shadow: inset 0 0 5px rgba(0,255,0,0.2);
+        }
+
+        #particle-solver-input-container {
+            flex: 1; /* Sağ taraf */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #particle-solver-input {
+            flex-grow: 1; /* Not defteri gibi textarea */
+            background-color: #3A3A3A;
+            border: 1px solid #555;
+            border-radius: 5px;
+            padding: 10px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1em;
+            color: #E0E0E0;
+            outline: none;
+            resize: none; /* Kullanıcı yeniden boyutlandıramasın */
+        }
+        #particle-solver-input::placeholder {
+            color: #A0A0A0;
+        }
+
+        #particle-solver-button {
+            background-color: #0078D7;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.2s ease;
+        }
+        #particle-solver-button:hover {
+            background-color: #005A9C;
+        }
+        #particle-solver-error {
+            color: red;
+            font-size: 0.9em;
+            text-align: center;
+            height: 1.2em; /* Mesaj geldiğinde yer kaplaması için */
+        }
+
+        /* Labirent Oyunu Modalı */
+        #maze-game-modal {
+            width: 450px; /* Canvas'tan biraz daha büyük */
+            height: 550px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #1a1a1a;
+            border: 1px solid #0f0; /* Yeşil çerçeve */
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5); /* Yeşil parlama */
+            color: #0f0;
+            z-index: 300; /* Diğer modalların üstünde */
+            display: none; /* Başlangıçta gizli */
+        }
+
+        #maze-game-title-bar {
+            background-color: #0f0; /* Yeşil başlık çubuğu */
+            color: black;
+            cursor: grab;
+        }
+
+        #maze-game-title-bar .close-btn { /* Genel modal close-btn stilini özelleştir */
+            color: black;
+        }
+        #maze-game-title-bar .close-btn:hover {
+            background-color: #f00; /* Kırmızı kapatma */
+            color: white;
+        }
+
+        #maze-canvas {
+            /* Yukarıdaki inline style yeterli ama ek stiller gerekirse buraya eklenebilir */
+        }
+
+        #maze-game-info {
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        /* 666 Mesajı Labirent Oyununda */
+        #six-six-six-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 5em;
+            color: red;
+            font-weight: bold;
+            text-shadow: 0 0 10px red, 0 0 20px red;
+            display: none; /* Başlangıçta gizli */
+            z-index: 350; /* Labirentin üstünde */
+        }
+
+        /* Parkur 999 Metni */
+        #parkour-nine-nine-nine {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 6em;
+            color: red;
+            font-weight: bold;
+            text-shadow: 0 0 10px red, 0 0 20px red, 0 0 30px black;
+            animation: shake 0.5s infinite alternate; /* Sallanma efekti */
+            display: none; /* Başlangıçta gizli */
+            z-index: 210; /* Oyunun üzerinde */
+        }
+
+        @keyframes shake {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            25% { transform: translate(-52%, -48%) rotate(2deg); }
+            50% { transform: translate(-48%, -50%) rotate(-2deg); }
+            75% { transform: translate(-52%, -52%) rotate(2deg); }
+            100% { transform: translate(-50%, -50%) rotate(0deg); }
+        }
+
+        .cmd-button { /* Genel bir button stili, diğer butonlar da kullanabilir */
+            background-color: #007bff; /* Mavi düğme */
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.8em;
+            transition: background-color 0.2s ease;
+        }
+        .cmd-button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Gizli Not Modalı */
+        #secret-note-modal {
+            width: 500px;
+            max-width: 90vw;
+            padding: 20px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #0a0a0a; /* Daha koyu arka plan */
+            border: 2px solid lime; /* Yeşil parlak çerçeve */
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.7); /* Yeşil parlama */
+            color: lime; /* Yeşil metin */
+            font-family: 'Press Start 2P', monospace; /* Retro font */
+            text-align: center;
+            display: none;
+            z-index: 1000; /* Her şeyin en üstünde */
+        }
+        #secret-note-modal h2 {
+            color: #00ff00; /* Parlak yeşil */
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            text-shadow: 0 0 5px lime;
+        }
+        #secret-note-modal p {
+            font-size: 0.9em;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            text-shadow: 0 0 2px lime;
+        }
+        #secret-note-modal .close-btn {
+            background-color: #008000; /* Kapatma butonu yeşil */
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.8em;
+            transition: background-color 0.2s ease;
+        }
+        #secret-note-modal .close-btn:hover {
+            background-color: #006400;
+        }
+
+        /* Hacker Kaçış Modalı - Genel Modal Stili */
+        #hacker-escape-modal {
+            width: 520px; /* Canvas'tan biraz büyük */
+            height: 620px; /* Başlık ve butonlar için yer */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #1a1a1a;
+            border: 1px solid #0f0; /* Yeşil çerçeve */
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5); /* Yeşil parlama */
+            color: #0f0;
+            z-index: 310; /* Diğer modalların üstünde */
+            display: none;
+        }
+        #hacker-escape-modal .title-bar {
+             background-color: #0f0; /* Yeşil başlık çubuğu */
+            color: black;
+            cursor: grab;
+        }
+
+        #hacker-escape-modal .title-bar .close-btn { /* Genel modal close-btn stilini özelleştir */
+            color: black;
+        }
+        #hacker-escape-modal .title-bar .close-btn:hover {
+            background-color: #f00; /* Kırmızı kapatma */
+            color: white;
+        }
+
+        /* Paint Uygulaması Stilleri */
+        #paint-window {
+            width: 700px;
+            height: 550px;
+            min-width: 400px;
+            min-height: 350px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            resize: both; /* Yeniden boyutlandırılabilir */
+            background-color: #E0E0E0; /* Açık gri arka plan */
+            border: 1px solid #999;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            z-index: 400; /* Diğer modalların üstünde */
+        }
+        #paint-window .title-bar {
+            background-color: #D0D0D0; /* Açık gri başlık çubuğu */
+            color: #333;
+            border-bottom: 1px solid #A0A0A0;
+        }
+        #paint-window .title-bar .close-btn {
+            color: #333;
+        }
+        #paint-window .title-bar .close-btn:hover {
+            background-color: #E81123;
+            color: white;
+        }
+
+        #paint-tools {
+            display: flex;
+            padding: 8px;
+            background-color: #F0F0F0;
+            border-bottom: 1px solid #D0D0D0;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap; /* Küçük ekranlarda alta geçsin */
+        }
+        .paint-tool-btn {
+            background-color: #E0E0E0;
+            border: 1px solid #CCC;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+            font-size: 0.9em;
+            color: #333;
+        }
+        .paint-tool-btn:hover {
+            background-color: #D0D0D0;
+            border-color: #B0B0B0;
+        }
+        .paint-tool-btn.active {
+            background-color: #0078D7;
+            color: white;
+            border-color: #0056b3;
+        }
+        #paint-color-picker {
+            border: none;
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            cursor: pointer;
+            background: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        #paint-color-picker::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        #paint-color-picker::-webkit-color-swatch {
+            border: 1px solid #CCC;
+            border-radius: 4px;
+        }
+        #paint-color-picker::-moz-color-swatch {
+            border: 1px solid #CCC;
+            border-radius: 4px;
+        }
+
+        #paint-brush-size {
+            width: 80px;
+            margin-left: 5px;
+        }
+        #paint-brush-size-label {
+            font-size: 0.8em;
+            color: #555;
+        }
+
+        #paint-canvas-container {
+            flex-grow: 1;
+            overflow: auto; /* Canvas büyükse scrollbar çıksın */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #F0F0F0; /* Canvas dışındaki alan */
+        }
+        #paint-canvas {
+            background-color: white; /* Çizim alanı beyaz */
+            border: 1px solid #CCC;
+            cursor: crosshair; /* Çizim imleci */
+        }
+
+        /* Not Defteri Uygulaması Stilleri */
+        #notepad-window {
+            width: 600px;
+            height: 400px;
+            min-width: 300px;
+            min-height: 200px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            resize: both; /* Yeniden boyutlandırılabilir */
+            background-color: #F0F0F0; /* Beyazımsı arka plan */
+            border: 1px solid #AAA;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            z-index: 410; /* Paint'in üstünde */
+        }
+        #notepad-window .title-bar {
+            background-color: #E0E0E0; /* Açık gri başlık çubuğu */
+            color: #333;
+            border-bottom: 1px solid #CCC;
+        }
+        #notepad-window .title-bar .close-btn {
+            color: #333;
+        }
+        #notepad-window .title-bar .close-btn:hover {
+            background-color: #E81123;
+            color: white;
+        }
+        #notepad-textarea {
+            flex-grow: 1;
+            width: 100%;
+            height: 100%;
+            padding: 10px;
+            border: none;
+            outline: none;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 1.1em;
+            line-height: 1.5;
+            resize: none; /* Textarea kendi boyutlandırılamasın, pencere boyutlansın */
+            background-color: white;
+            color: #333; /* Varsayılan metin rengi */
+            box-sizing: border-box; /* Padding dahil genişlik */
+        }
+
+        /* Kart Oyunu Modalı */
+        #card-game-modal {
+            width: 650px; /* Kart sayısı ve boşluklara göre ayarlandı */
+            height: 600px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #2a2a2a; /* Koyu tema */
+            border: 1px solid #505050;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            z-index: 420; /* Diğer modalların üstünde */
+            display: none;
+        }
+        #card-game-modal .title-bar {
+            background-color: #1a1a1a;
+            color: #E0E0E0;
+        }
+
+        #card-game-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            gap: 15px;
+        }
+
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 4 sütun */
+            grid-template-rows: repeat(4, 1fr); /* 4 satır */
+            gap: 10px;
+            width: 100%;
+            height: calc(100% - 80px); /* Kontrol alanı için boşluk */
+            max-width: 600px; /* Maksimum genişlik */
+            max-height: 480px; /* Maksimum yükseklik */
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            background-color: #4CAF50; /* Kart arka yüzü yeşil */
+            border: 2px solid #333;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.3s ease, background-color 0.3s ease;
+            transform-style: preserve-3d; /* 3D çevirme için */
+            position: relative;
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+            background-color: #F0F0F0; /* Açık renk ön yüz */
+            color: #333;
+        }
+
+        .card.matched {
+            background-color: #888; /* Eşleşen kartlar biraz grileşsin */
+            pointer-events: none; /* Tıklanamaz olsun */
+            transform: rotateY(180deg); /* Eşleşen kartlar da açık kalsın */
+        }
+
+        .card .front-face, .card .back-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden; /* Ters yüzünü gizle */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5em; /* Karkonç karakterleri daha büyük */
+            font-family: 'Press Start 2P', cursive;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        .card .front-face {
+            transform: rotateY(180deg);
+            color: #333; /* Ön yüz metin rengi */
+            background-color: #F0F0F0; /* Ön yüz arka planı */
+            border-radius: 8px;
+        }
+
+        .card .back-face {
+            background-color: #4CAF50; /* Kart arka yüzü yeşil */
+            color: white;
+            border-radius: 8px;
+        }
+
+
+        #game-controls-card {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            width: 100%;
+        }
+        #game-controls-card button {
+            background-color: #0078D7;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s ease;
+        }
+        #game-controls-card button:hover {
+            background-color: #005A9C;
+        }
+        #card-game-info {
+            color: white;
+            font-size: 1.1em;
+            text-align: center;
+            font-family: 'Press Start 2P', cursive;
+            margin-bottom: 10px;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="start-screen">
+        <h1>Dark PC</h1>
+        <button id="start-button">BAŞLAT</button>
+    </div>
+
+    <div id="loading-screen">
+        <div id="loading-text-container">
+            Loading Dark PC OS...
+        </div>
+        <div id="loading-bar-container">
+            <div id="loading-bar"></div>
+            <span id="loading-percentage">0%</span>
+        </div>
+    </div>
+
+    <div id="main-desktop">
+        <div id="cmd-window">
+            <div id="title-bar">
+                <div id="title-text">Dark PC - Command Prompt</div>
+                <div id="window-controls">
+                    <div id="minimize-button" class="control-button"></div>
+                    <div id="maximize-button" class="control-button"></div>
+                    <div id="close-button" class="control-button"></div>
+                </div>
+            </div>
+            <div id="content">
+                <div id="initial-message">C:\Users\DarkPC> Lütfen herhangi bir tuşa basın...</div>
+                <div id="output"></div>
+                <div class="command-line">
+                    <span class="prompt">C:\Users\DarkPC></span>
+                    <input type="text" class="cmd-input">
+                </div>
+                <div id="kill-message">Ölüm sona erdi!</div>
+            </div>
+        </div>
+
+        <div id="app-icons-container">
+            <div id="dark-pc-icon" class="app-icon">
+                <div class="app-icon-img"></div>
+                <span>Dark PC CMD</span>
+            </div>
+            <div id="xbox-icon" class="app-icon">
+                <div class="app-icon-img"></div>
+                <span>Xbox</span>
+            </div>
+            <div id="parkour-game-icon" class="app-icon">
+                <div class="app-icon-img"></div>
+                <span>TheParkourGame</span>
+            </div>
+            <div id="particle-solver-icon" class="app-icon">
+                <div class="app-icon-img"></div>
+                <span>Parçacık Çözücü</span>
+            </div>
+            <div id="maze-game-icon" class="app-icon">
+                <div class="app-icon-img"></div>
+                <span>Labirent Oyunu</span>
+            </div>
+            <div id="hacker-escape-icon" class="app-icon">
+                <div class="app-icon-img">&#128125;</div> <span>Hacker Kaçış</span>
+            </div>
+            <div id="paint-icon" class="app-icon">
+                <div class="app-icon-img"></div>
+                <span>Paint</span>
+            </div>
+            <div id="notepad-icon" class="app-icon">
+                <div class="app-icon-img"></div>
+                <span>Not Defteri</span>
+            </div>
+            <div id="card-game-icon" class="app-icon">
+                <div class="app-icon-img"></div>
+                <span>Kart Oyunu</span>
+            </div>
+        </div>
+
+        <div id="taskbar">
+            <div id="current-time"></div>
+        </div>
+
+    </div>
+
+    <div id="xbox-chat-window" class="modal-window">
+        <div id="chat-header" class="title-bar">
+            <span class="title-text">coolplayer31</span>
+            <button class="close-btn" id="close-chat-btn">&times;</button>
+        </div>
+        <div id="chat-messages">
+        </div>
+        <div id="chat-input-container">
+            <input type="text" id="chat-input" placeholder="Mesaj yazın...">
+            <button id="send-button">Gönder</button>
+        </div>
+    </div>
+
+    <div id="crash-message-box" class="modal-window">
+        <h2>UYGULAMA ÇÖKTÜ!</h2>
+        <p>Xbox uygulaması çöktü.</p>
+        <p>Sebep: **this ip hacked**</p>
+        <button id="crash-ok-button">Tamam</button>
+    </div>
+
+    <div id="parkour-game-modal">
+        <div id="game-container">
+            <canvas id="game-canvas" width="800" height="400"></canvas>
+            <div id="game-controls">
+                <button id="close-game-btn" class="cmd-button">Oyundan Çık</button>
+            </div>
+            <div id="parkour-nine-nine-nine">999</div>
+        </div>
+    </div>
+
+    <div id="nine-nine-nine-modal">
+        <img src="image_b304ed.jpg" alt="999 Hata Kodu">
+        <span id="nine-nine-nine-text">999</span>
+        <button class="close-btn" id="close-nine-nine-nine-btn">&times;</button>
+    </div>
+
+    <div id="particle-solver-window" class="modal-window">
+        <div id="particle-solver-title-bar" class="title-bar">
+            <span class="title-text">Parçacık Çözücü</span>
+            <button class="close-btn" id="close-particle-solver-btn">&times;</button>
+        </div>
+        <div id="particle-solver-content">
+            <div id="particle-solver-output"></div>
+            <div id="particle-solver-input-container">
+                <textarea id="particle-solver-input" placeholder="Kodu buraya girin..."></textarea>
+                <button id="particle-solver-button" class="cmd-button">Çöz</button>
+                <div id="particle-solver-error"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="maze-game-modal" class="modal-window">
+        <div id="maze-game-title-bar" class="title-bar">
+            <span class="title-text">Labirent Oyunu</span>
+            <div class="window-controls">
+                <button class="close-btn" id="maze-game-close-btn">&times;</button>
+            </div>
+        </div>
+        <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px;">
+            <canvas id="maze-canvas" width="400" height="400" style="border: 2px solid #0f0; background-color: #333; margin-bottom: 10px;"></canvas>
+            <div id="maze-game-info" style="color: #0f0; font-family: 'Press Start 2P', monospace; text-align: center;">Yolu bul!</div>
+            <button id="maze-game-start-btn" class="cmd-button">Oyunu Başlat</button>
+            <button id="maze-game-reset-btn" class="cmd-button" style="display: none; margin-top: 5px;">Yeniden Başlat</button>
+            <div id="six-six-six-message">666</div>
+        </div>
+    </div>
+
+    <div id="secret-note-modal" class="modal-window">
+        <div class="modal-content">
+            <h2 id="secret-note-title"></h2>
+            <p id="secret-note-text"></p>
+            <button class="close-btn" id="close-secret-note-btn">Anlaşıldı</button>
+        </div>
+    </div>
+
+    <div id="hacker-escape-modal" class="modal-window">
+        <div class="title-bar">
+            <span class="title-text">Hacker Kaçış</span>
+            <button class="close-btn" id="hacker-escape-close-btn">&times;</button>
+        </div>
+        <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; background-color: #0a0a0a;">
+            <canvas id="hacker-escape-canvas" width="500" height="500" style="border: 2px solid #0f0; background-color: #000;"></canvas>
+            <div id="hacker-escape-info" style="color: #0f0; font-family: 'Press Start 2P', monospace; margin-top: 10px; text-align: center;">Veri Paketlerini Topla!</div>
+            <button id="hacker-escape-start-btn" class="cmd-button" style="margin-top: 15px;">Oyunu Başlat</button>
+            <button id="hacker-escape-reset-btn" class="cmd-button" style="display: none; margin-top: 5px;">Yeniden Başlat</button>
+        </div>
+    </div>
+
+    <div id="paint-window" class="modal-window">
+        <div class="title-bar">
+            <span class="title-text">Paint</span>
+            <button class="close-btn" id="close-paint-btn">&times;</button>
+        </div>
+        <div id="paint-tools">
+            <button class="paint-tool-btn active" id="tool-pencil">Kalem</button>
+            <button class="paint-tool-btn" id="tool-eraser">Silgi</button>
+            <label id="paint-brush-size-label" for="paint-brush-size">Boyut:</label>
+            <input type="range" id="paint-brush-size" min="1" max="50" value="5">
+            <label for="paint-color-picker">Renk:</label>
+            <input type="color" id="paint-color-picker" value="#000000">
+            <button class="paint-tool-btn" id="tool-clear">Temizle</button>
+        </div>
+        <div id="paint-canvas-container">
+            <canvas id="paint-canvas" width="600" height="400"></canvas>
+        </div>
+    </div>
+
+    <div id="notepad-window" class="modal-window">
+        <div class="title-bar">
+            <span class="title-text">Not Defteri</span>
+            <button class="close-btn" id="close-notepad-btn">&times;</button>
+        </div>
+        <textarea id="notepad-textarea"></textarea>
+    </div>
+
+    <div id="card-game-modal" class="modal-window">
+        <div class="title-bar">
+            <span class="title-text">Kart Eşleştirme (Karkonç)</span>
+            <button class="close-btn" id="close-card-game-btn">&times;</button>
+        </div>
+        <div id="card-game-content">
+            <div id="card-game-info">Eşleşen kartları bul!</div>
+            <div id="game-board"></div>
+            <div id="game-controls-card">
+                <button id="card-game-start-btn" class="cmd-button">Oyunu Başlat</button>
+                <button id="card-game-reset-btn" class="cmd-button" style="display: none;">Yeniden Başlat</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // DOM Elemanları
+        const startScreen = document.getElementById('start-screen');
+        const startButton = document.getElementById('start-button');
+        const loadingScreen = document.getElementById('loading-screen');
+        const loadingBar = document.getElementById('loading-bar');
+        const loadingPercentage = document.getElementById('loading-percentage');
+        const mainDesktop = document.getElementById('main-desktop');
+        const taskbar = document.getElementById('taskbar');
+        const currentTimeDisplay = document.getElementById('current-time');
+
+        const cmdWindow = document.getElementById('cmd-window');
+        const initialMessageDiv = document.getElementById('initial-message');
+        const outputDiv = document.getElementById('output');
+        const cmdInput = cmdWindow.querySelector('.cmd-input');
+        const killMessageDiv = document.getElementById('kill-message');
+        const darkPcIcon = document.getElementById('dark-pc-icon');
+        const xboxIcon = document.getElementById('xbox-icon');
+        const parkourGameIcon = document.getElementById('parkour-game-icon');
+        const particleSolverIcon = document.getElementById('particle-solver-icon');
+        const xboxChatWindow = document.getElementById('xbox-chat-window');
+        const closeChatBtn = document.getElementById('close-chat-btn');
+        const chatMessagesDiv = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input');
+        const sendButton = document.getElementById('send-button');
+        const crashMessageBox = document.getElementById('crash-message-box');
+        const crashOkButton = document.getElementById('crash-ok-button');
+        const parkourGameModal = document.getElementById('parkour-game-modal');
+        const closeGameBtn = document.getElementById('close-game-btn');
+        const gameCanvas = document.getElementById('game-canvas');
+        const ctx = gameCanvas.getContext('2d');
+        const parkourNineNineNine = document.getElementById('parkour-nine-nine-nine');
+        const nineNineNineModal = document.getElementById('nine-nine-nine-modal');
+        const closeNineNineNineBtn = document.getElementById('close-nine-nine-nine-btn');
+        const nineNineNineImage = document.querySelector('#nine-nine-nine-modal img');
+        const nineNineNineText = document.getElementById('nine-nine-nine-text');
+        const particleSolverWindow = document.getElementById('particle-solver-window');
+        const closeParticleSolverBtn = document.getElementById('close-particle-solver-btn');
+        const particleSolverInput = document.getElementById('particle-solver-input');
+        const particleSolverButton = document.getElementById('particle-solver-button');
+        const particleSolverOutput = document.getElementById('particle-solver-output');
+        const particleSolverError = document.getElementById('particle-solver-error');
+        const mazeGameIcon = document.getElementById('maze-game-icon');
+        const mazeGameModal = document.getElementById('maze-game-modal');
+        const mazeGameCloseBtn = document.getElementById('maze-game-close-btn');
+        const mazeCanvas = document.getElementById('maze-canvas');
+        const mazeCtx = mazeCanvas.getContext('2d');
+        const mazeGameInfo = document.getElementById('maze-game-info');
+        const mazeGameStartBtn = document.getElementById('maze-game-start-btn');
+        const mazeGameResetBtn = document.getElementById('maze-game-reset-btn');
+        const sixSixSixMessage = document.getElementById('six-six-six-message');
+        const secretNoteModal = document.getElementById('secret-note-modal');
+        const secretNoteTitle = document.getElementById('secret-note-title');
+        const secretNoteText = document.getElementById('secret-note-text');
+        const closeSecretNoteBtn = document.getElementById('close-secret-note-btn');
+
+        // Hacker Kaçış Oyunu DOM Elemanları
+        const hackerEscapeIcon = document.getElementById('hacker-escape-icon');
+        const hackerEscapeModal = document.getElementById('hacker-escape-modal');
+        const hackerEscapeCloseBtn = document.getElementById('hacker-escape-close-btn');
+        const hackerEscapeCanvas = document.getElementById('hacker-escape-canvas');
+        const heCtx = hackerEscapeCanvas.getContext('2d');
+        const hackerEscapeInfo = document.getElementById('hacker-escape-info');
+        const hackerEscapeStartBtn = document.getElementById('hacker-escape-start-btn');
+        const hackerEscapeResetBtn = document.getElementById('hacker-escape-reset-btn');
+
+        // Paint Uygulaması DOM Elemanları
+        const paintIcon = document.getElementById('paint-icon');
+        const paintWindow = document.getElementById('paint-window');
+        const closePaintBtn = document.getElementById('close-paint-btn');
+        const paintCanvas = document.getElementById('paint-canvas');
+        const paintCtx = paintCanvas.getContext('2d');
+        const toolPencilBtn = document.getElementById('tool-pencil');
+        const toolEraserBtn = document.getElementById('tool-eraser');
+        const toolClearBtn = document.getElementById('tool-clear');
+        const paintBrushSize = document.getElementById('paint-brush-size');
+        const paintColorPicker = document.getElementById('paint-color-picker');
+        const paintToolBtns = document.querySelectorAll('.paint-tool-btn');
+
+        // Not Defteri DOM Elemanları
+        const notepadIcon = document.getElementById('notepad-icon');
+        const notepadWindow = document.getElementById('notepad-window');
+        const closeNotepadBtn = document.getElementById('close-notepad-btn');
+        const notepadTextarea = document.getElementById('notepad-textarea');
+
+        // Kart Oyunu DOM Elemanları
+        const cardGameIcon = document.getElementById('card-game-icon');
+        const cardGameModal = document.getElementById('card-game-modal');
+        const closeCardGameBtn = document.getElementById('close-card-game-btn');
+        const cardGameBoard = document.getElementById('game-board');
+        const cardGameInfo = document.getElementById('card-game-info');
+        const cardGameStartBtn = document.getElementById('card-game-start-btn');
+        const cardGameResetBtn = document.getElementById('card-game-reset-btn');
+
+
+        // Durum Değişkenleri
+        let activeModal = null; // Hangi inputun odaklı olduğunu takip et ('cmd', 'xbox_chat', 'game', 'particle_solver', 'maze_game', 'hacker_escape', 'paint', 'notepad', 'card_game', null)
+
+        // Yeni değişkenler: CMD Hacking Simülasyonu için
+        let isHackingSpamming = false;
+        let hackSpamInterval;
+        const hackMessages = [
+            "Hedef sistem taranıyor...",
+            "Güvenlik duvarı aşılıyor...",
+            "Veri paketleri enjekte ediliyor...",
+            "Erişim protokolü kuruluyor...",
+            "Brute-force saldırısı başlatıldı...",
+            "Şifreler çözülüyor... %",
+            "Sistem arka kapısı aranıyor...",
+            "root@target_ip:~/ # Erişim sağlandı.",
+            "Anahtar dosyalar indiriliyor...",
+            "Firewall Bypass Success!",
+            "Connection established to remote server...",
+            "Scanning for vulnerabilities...",
+            "Injecting malicious payload...",
+            "Cracking encryption keys...",
+            "Bypassing authentication...",
+            "Accessing kernel memory...",
+            "DATA BREACH: Initiated transfer of sensitive information...",
+            "STATUS: SYSTEM COMPROMISED. FULL CONTROL ACQUIRED."
+        ];
+        let messageIndex = 0; // Hacking mesajları için sayaç
+
+
+        // Ortak Modal İşlevselliği
+        function makeDraggable(element, handle = null) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            const dragHandle = handle || element; // Eğer handle belirtilmezse, tüm element sürükleme alanı olur
+
+            dragHandle.onmousedown = dragMouseDown;
+
+            function dragMouseDown(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+                // Modalı öne getir
+                bringToFront(element);
+            }
+
+            function elementDrag(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                // Yeni pozisyonları hesapla
+                let newX = element.offsetLeft - pos1;
+                let newY = element.offsetTop - pos2;
+
+                // Ekran sınırları içinde kalmasını sağla
+                const minX = 0;
+                const minY = 0;
+                const maxX = window.innerWidth - element.offsetWidth;
+                const maxY = window.innerHeight - element.offsetHeight;
+
+                element.style.left = Math.max(minX, Math.min(newX, maxX)) + "px";
+                element.style.top = Math.max(minY, Math.min(newY, maxY)) + "px";
+            }
+
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+        }
+
+        // Modalları öne getirme (z-index yönetimi)
+        let maxZIndex = 200; // Başlangıç z-index'i
+
+        function bringToFront(element) {
+            maxZIndex++;
+            element.style.zIndex = maxZIndex;
+            activeModal = element; // Aktif modalı güncelle
+        }
+
+        function setActiveModal(modalElement) {
+            activeModal = modalElement;
+            if (modalElement) {
+                bringToFront(modalElement);
+            }
+        }
+
+        // Saati Güncelleme Fonksiyonu
+        function updateTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            currentTimeDisplay.textContent = `${hours}:${minutes}:${seconds}`;
+        }
+
+
+        // Başlatma Ekranı İşlevselliği
+        startButton.addEventListener('click', () => {
+            startScreen.style.display = 'none';
+            loadingScreen.style.display = 'flex';
+            let width = 0;
+            const loadInterval = setInterval(() => {
+                if (width >= 100) {
+                    clearInterval(loadInterval);
+                    loadingScreen.style.display = 'none';
+                    mainDesktop.style.display = 'block'; // Ana masaüstünü göster
+                    taskbar.style.display = 'flex'; // Alt çubuğu göster
+                    setInterval(updateTime, 1000); // Saati her saniye güncelle
+                    updateTime(); // Başlangıçta bir kez güncelle
+                } else {
+                    width += 1;
+                    loadingBar.style.width = width + '%';
+                    loadingPercentage.textContent = width + '%';
+                    if (width >= 60 && width < 70) {
+                        document.getElementById('loading-text-container').textContent = "Initializing core components...";
+                    } else if (width >= 80 && width < 90) {
+                        document.getElementById('loading-text-container').textContent = "Establishing secure connection...";
+                    } else if (width >= 90) {
+                        document.getElementById('loading-text-container').textContent = "Finalizing startup sequence...";
+                    }
+                }
+            }, 50); // Yüklenme hızı (ms)
+        });
+
+        // Tüm modalları kapatma fonksiyonu
+        function closeAllModals() {
+            cmdWindow.style.display = 'none';
+            xboxChatWindow.style.display = 'none';
+            crashMessageBox.style.display = 'none';
+            parkourGameModal.style.display = 'none';
+            nineNineNineModal.style.display = 'none';
+            particleSolverWindow.style.display = 'none';
+            mazeGameModal.style.display = 'none';
+            secretNoteModal.style.display = 'none';
+            hackerEscapeModal.style.display = 'none';
+            paintWindow.style.display = 'none'; // Paint'i de kapat
+            notepadWindow.style.display = 'none'; // Not Defteri'ni de kapat
+            cardGameModal.style.display = 'none'; // Kart oyununu da kapat
+
+            // CMD için özel durdurma mantığı
+            stopHackingSpam();
+            initialMessageDiv.style.display = 'block';
+            killMessageDiv.style.display = 'none';
+            cmdInput.style.display = 'none';
+            outputDiv.innerHTML = '';
+            // Parkur oyunu için durdurma
+            if (gameInterval) clearInterval(gameInterval);
+            parkourNineNineNine.style.display = 'none';
+            // Labirent oyunu için durdurma
+            if (mazeGameLoopInterval) clearInterval(mazeGameLoopInterval);
+            sixSixSixMessage.style.display = 'none';
+            // Hacker Kaçış için durdurma
+            if (heGameLoopInterval) clearInterval(heGameLoopInterval);
+            heGameActive = false;
+            // Kart oyunu için durdurma
+            if (cardGameTimeout) clearTimeout(cardGameTimeout);
+            if (cardGameTimerInterval) clearInterval(cardGameTimerInterval);
+
+            setActiveModal(null);
+        }
+
+        // Genel closeWindow fonksiyonu (bir modulu kapatmek için)
+        function closeWindow(windowElement) {
+            windowElement.style.display = 'none';
+            // Eğer kapanan pencere aktif modal ise aktif modalı temizle
+            if (activeModal === windowElement) {
+                setActiveModal(null);
+            }
+        }
+
+        // Sürükleme işlevselliğini ekle
+        makeDraggable(cmdWindow, cmdWindow.querySelector('#title-bar'));
+        makeDraggable(xboxChatWindow, xboxChatWindow.querySelector('.title-bar'));
+        makeDraggable(crashMessageBox, crashMessageBox.querySelector('.title-bar'));
+        makeDraggable(particleSolverWindow, particleSolverWindow.querySelector('.title-bar'));
+        makeDraggable(mazeGameModal, mazeGameModal.querySelector('.title-bar'));
+        makeDraggable(secretNoteModal, secretNoteModal.querySelector('.modal-content'));
+        makeDraggable(hackerEscapeModal, hackerEscapeModal.querySelector('.title-bar'));
+        makeDraggable(paintWindow, paintWindow.querySelector('.title-bar'));
+        makeDraggable(notepadWindow, notepadWindow.querySelector('.title-bar'));
+        makeDraggable(cardGameModal, cardGameModal.querySelector('.title-bar')); // Kart oyunu için de ekledik
+
+
+        // Dark PC CMD Uygulaması İşlevselliği
+        darkPcIcon.addEventListener('click', () => {
+            closeAllModals(); // Diğer açık pencereleri kapat
+            cmdWindow.style.display = 'flex';
+            initialMessageDiv.textContent = 'C:\\Users\\DarkPC> Lütfen herhangi bir tuşa basın...';
+            outputDiv.innerHTML = '';
+            killMessageDiv.style.display = 'none';
+            cmdInput.value = '';
+            cmdInput.style.display = 'none'; // Başlangıçta inputu gizle
+            isHackingSpamming = false;
+            if (hackSpamInterval) { // Önceki spam varsa durdur
+                clearInterval(hackSpamInterval);
+            }
+            setActiveModal(cmdWindow);
+        });
+
+        // CMD için herhangi bir tuşa basma olayı (document üzerinde dinliyoruz)
+        document.addEventListener('keydown', (e) => {
+            // Eğer CMD penceresi açıksa ve hacking spam'i başlamadıysa
+            if (cmdWindow.style.display === 'flex' && activeModal === cmdWindow && !isHackingSpamming) {
+                // Herhangi bir tuşa basıldığında hacking spam'i başlat
+                initialMessageDiv.style.display = 'none';
+                cmdInput.style.display = 'inline-block';
+                startHackingSpam();
+            } else if (cmdWindow.style.display === 'flex' && activeModal === cmdWindow && isHackingSpamming && e.key === 'Enter') {
+                // Hacking spam'i devam ederken Enter'a basıldıysa durdur
+                e.preventDefault(); // Varsayılan Enter davranışını engelle
+                stopHackingSpam();
+                showKillMessage();
+            }
+            // Hacking sırasında input'a yazmayı engelle, sadece Enter'ı yakalıyoruz
+            if (cmdWindow.style.display === 'flex' && activeModal === cmdWindow && isHackingSpamming && e.key !== 'Enter') {
+                e.preventDefault();
+            }
+        });
+
+
+        // Kapatma butonu
+        document.getElementById('close-button').addEventListener('click', () => {
+            closeWindow(cmdWindow);
+            stopHackingSpam();
+            initialMessageDiv.style.display = 'block';
+            killMessageDiv.style.display = 'none';
+            cmdInput.style.display = 'none';
+            outputDiv.innerHTML = '';
+        });
+
+        function startHackingSpam() {
+            if (isHackingSpamming) return;
+
+            isHackingSpamming = true;
+            messageIndex = 0;
+            outputDiv.innerHTML = '';
+
+            hackSpamInterval = setInterval(() => {
+                if (messageIndex >= hackMessages.length) {
+                    messageIndex = 0;
+                }
+                const message = hackMessages[messageIndex];
+                const percentMatch = message.match(/%$/);
+
+                let displayMessage = message;
+                if (percentMatch) {
+                    const randomPercent = Math.floor(Math.random() * 100);
+                    displayMessage = message.replace('%', randomPercent + '%');
+                }
+
+                const newLine = document.createElement('div');
+                newLine.textContent = displayMessage;
+                outputDiv.appendChild(newLine);
+                outputDiv.scrollTop = outputDiv.scrollHeight;
+
+                messageIndex++;
+            }, 150); // Her 150ms'de bir yeni mesaj
+        }
+
+        function stopHackingSpam() {
+            if (!isHackingSpamming) return;
+            clearInterval(hackSpamInterval);
+            isHackingSpamming = false;
+            cmdInput.style.display = 'inline-block';
+            cmdInput.value = '';
+        }
+
+        function showKillMessage() {
+            killMessageDiv.style.display = 'block';
+        }
+
+
+        // Xbox Chat Uygulaması İşlevselliği
+        xboxIcon.addEventListener('click', () => {
+            closeAllModals();
+            xboxChatWindow.style.display = 'flex';
+            chatMessagesDiv.innerHTML = ''; // Eski mesajları temizle
+            // Başlangıç mesajları
+            appendMessage('coolplayer31', 'Selam! Oyun açıldı mı?');
+            setTimeout(() => appendMessage('coolplayer31', 'Hangi oyuna girelim?'), 1500);
+            setActiveModal(xboxChatWindow);
+            chatInput.focus();
+        });
+
+        closeChatBtn.addEventListener('click', () => {
+            closeWindow(xboxChatWindow);
+        });
+
+        sendButton.addEventListener('click', () => {
+            sendMessage();
+        });
+
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Enter tuşunun varsayılan hareketini engelle (yeni satır gibi)
+                sendMessage();
+            }
+        });
+
+        let messageCounter = 0;
+        function sendMessage() {
+            const messageText = chatInput.value.trim();
+            if (messageText) {
+                appendMessage('you', messageText);
+                chatInput.value = ''; // Clear input
+
+                messageCounter++;
+                if (messageCounter === 3) { // 3. mesajda çökme
+                    setTimeout(() => {
+                        closeWindow(xboxChatWindow);
+                        crashMessageBox.style.display = 'flex';
+                        setActiveModal(crashMessageBox);
+                    }, 1000);
+                } else { // Diğer mesajlara otomatik yanıt
+                    setTimeout(() => {
+                        appendMessage('coolplayer31', 'Hmm, ilginç bir oyun seçimi!');
+                    }, 1000);
+                }
+            }
+        }
+
+        function appendMessage(sender, text) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', sender);
+            messageElement.textContent = text;
+            chatMessagesDiv.appendChild(messageElement);
+            chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight; // Scroll to bottom
+        }
+
+        crashOkButton.addEventListener('click', () => {
+            closeWindow(crashMessageBox);
+        });
+
+
+        // Parkur Oyunu İşlevselliği
+        let player = {
+            x: 50,
+            y: gameCanvas.height - 70, // Başlangıçta zemine yakın
+            width: 20,
+            height: 20,
+            dx: 0, // X hızı
+            dy: 0, // Y hızı
+            jumpPower: -12, // Negatif değer yukarı hareket için (biraz daha fazla zıplat)
+            gravity: 0.6, // Yerçekimi biraz artırıldı
+            onGround: false, // Yerde mi kontrolü
+            score: 0 // Oyuncu skorunu burada tut
+        };
+
+        let platforms = [
+            { x: 0, y: gameCanvas.height - 50, width: gameCanvas.width, height: 50 }, // Zemin
+            // Platformlar daha erişilebilir hale getirildi
+            { x: 100, y: gameCanvas.height - 100, width: 80, height: 20 },
+            { x: 200, y: gameCanvas.height - 150, width: 120, height: 20 },
+            { x: 350, y: gameCanvas.height - 200, width: 100, height: 20 },
+            { x: 500, y: gameCanvas.height - 250, width: 150, height: 20 },
+            { x: 700, y: gameCanvas.height - 300, width: 80, height: 20 },
+            { x: 50, y: gameCanvas.height - 280, width: 70, height: 20 }, // Yeni bir platform eklendi
+            // Son yıldız için zorlu bir platform (örneğin sonlara doğru yüksek bir platform)
+            { x: 650, y: gameCanvas.height - 350, width: 100, height: 20 }
+        ];
+
+        let singleStar = null; // Tek yıldız değişkeni
+        const STAR_SIZE = 20; // Yıldız boyutu
+
+        function generateSingleStar() {
+            // Son platformun üstüne yerleştir
+            const lastPlatform = platforms[platforms.length - 1];
+            singleStar = {
+                x: lastPlatform.x + (lastPlatform.width / 2) - (STAR_SIZE / 2),
+                y: lastPlatform.y - STAR_SIZE - 10, // Platformun biraz üstü
+                width: STAR_SIZE,
+                height: STAR_SIZE,
+                collected: false
+            };
+        }
+
+        let gameInterval;
+        let gameOver = false;
+        let starCollected = false; // Yıldızın toplanıp toplanmadığını kontrol et
+
+        // Klavye tuşları
+        let keys = {};
+        window.addEventListener('keydown', (e) => {
+            // Sadece parkur oyunu modali aktifse tuşları dinle
+            if (parkourGameModal.style.display === 'flex' && activeModal === parkourGameModal) {
+                keys[e.key] = true;
+            }
+        });
+        window.addEventListener('keyup', (e) => {
+            if (parkourGameModal.style.display === 'flex' && activeModal === parkourGameModal) {
+                keys[e.key] = false;
+            }
+        });
+
+        function startGame() {
+            // Oyuncu ve skor değerlerini sıfırla
+            player = {
+                x: 50,
+                y: gameCanvas.height - 70,
+                width: 20,
+                height: 20,
+                dx: 0,
+                dy: 0,
+                jumpPower: -12,
+                gravity: 0.6,
+                onGround: false,
+                score: 0
+            };
+            gameOver = false;
+            starCollected = false; // Yıldız toplandı bilgisini sıfırla
+            parkourNineNineNine.style.display = 'none'; // 999 yazısını gizle
+            generateSingleStar(); // Yeni yıldızı oluştur
+
+            // Önceki interval'i temizle
+            if (gameInterval) clearInterval(gameInterval);
+
+            // Oyun döngüsünü başlat
+            gameInterval = setInterval(gameLoop, 1000 / 60); // 60 FPS
+            parkourGameModal.style.display = 'flex'; // Modalı göster
+            setActiveModal(parkourGameModal);
+        }
+
+        function gameLoop() {
+            if (gameOver) {
+                clearInterval(gameInterval);
+                drawParkourGame(); // Son durumu çiz
+                ctx.fillStyle = 'red';
+                ctx.font = '48px Press Start 2P';
+                ctx.textAlign = 'center';
+                ctx.fillText('OYUN BİTTİ!', gameCanvas.width / 2, gameCanvas.height / 2 - 20);
+                ctx.font = '24px Press Start 2P';
+                ctx.fillText(`Skor: ${player.score}`, gameCanvas.width / 2, gameCanvas.height / 2 + 30);
+                ctx.fillText('Çıkış için "Oyundan Çık"', gameCanvas.width / 2, gameCanvas.height / 2 + 70);
+                return;
+            }
+
+            updateParkourGame();
+            drawParkourGame();
+        }
+
+        function updateParkourGame() {
+            // Oyuncu hareketleri
+            player.dx = 0;
+            if (keys['ArrowLeft'] || keys['a']) {
+                player.dx = -4; // Hız artırıldı
+            }
+            if (keys['ArrowRight'] || keys['d']) {
+                player.dx = 4; // Hız artırıldı
+            }
+            if ((keys['ArrowUp'] || keys['w'] || keys[' ']) && player.onGround) { // Boşluk tuşu da zıplasın
+                player.dy = player.jumpPower;
+                player.onGround = false;
+            }
+
+            // Yerçekimi
+            player.dy += player.gravity;
+            player.y += player.dy;
+            player.x += player.dx;
+
+            // Ekran sınırları
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.width > gameCanvas.width) player.x = gameCanvas.width - player.width;
+
+            // Çarpışma algılama (platformlarla)
+            player.onGround = false;
+            platforms.forEach(platform => {
+                if (player.x < platform.x + platform.width &&
+                    player.x + player.width > platform.x &&
+                    player.y + player.height > platform.y &&
+                    player.y < platform.y + platform.height) {
+
+                    if (player.dy > 0 && player.y + player.height - player.dy <= platform.y) {
+                        player.y = platform.y - player.height;
+                        player.dy = 0;
+                        player.onGround = true;
+                    }
+                }
+            });
+
+            // Tek yıldızla çarpışma kontrolü
+            if (singleStar && !singleStar.collected) {
+                if (player.x < singleStar.x + singleStar.width &&
+                    player.x + player.width > singleStar.x &&
+                    player.y < singleStar.y + singleStar.height &&
+                    player.y + player.height > singleStar.y) {
+                    singleStar.collected = true;
+                    starCollected = true;
+                    player.score += 1000; // Yıldız toplandığında büyük skor artışı
+
+                    showParkourNineNineNine(); // 999 animasyonunu göster
+                }
+            }
+
+
+            // Oyuncu canvas'ın altından düşerse oyun biter
+            if (player.y + player.height > gameCanvas.height) {
+                gameOver = true;
+            }
+
+            // Skor artırma mantığı: Oyuncu sağa doğru ilerledikçe skor artsın
+            if (!gameOver) {
+                player.score = Math.floor(player.x / 10);
+                if (starCollected) { // Eğer yıldız toplandıysa ekstra puan
+                    player.score += 1000;
+                }
+            }
+        }
+
+        function drawParkourGame() {
+            ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height); // Tuvali temizle
+
+            // Arka planı çiz
+            ctx.fillStyle = '#87CEEB'; // Gökyüzü mavisi
+            ctx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+
+            // Platformları çiz
+            ctx.fillStyle = '#8B4513'; // Kahverengi
+            platforms.forEach(platform => {
+                ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+            });
+
+            // Tek yıldızı çiz
+            if (singleStar && !singleStar.collected) {
+                ctx.fillStyle = 'gold'; // Yıldız rengi
+                // Yıldız şekli yerine basit bir kare çizelim
+                ctx.fillRect(singleStar.x, singleStar.y, singleStar.width, singleStar.height);
+                // Eğer istersen buraya daha karmaşık bir yıldız çizim fonksiyonu da ekleyebilirsin
+                // drawStar(ctx, singleStar.x + singleStar.width / 2, singleStar.y + singleStar.height / 2, 5, singleStar.width / 2, singleStar.width / 4);
+            }
+
+            // Oyuncuyu çiz
+            ctx.fillStyle = 'blue';
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+
+            // Skoru çiz
+            ctx.fillStyle = 'black';
+            ctx.font = '20px Press Start 2P';
+            ctx.textAlign = 'left';
+            ctx.fillText(`Skor: ${player.score}`, 10, 30);
+            if (!starCollected) {
+                ctx.fillText(`Yıldız: Aranıyor`, 10, 60);
+            } else {
+                ctx.fillText(`Yıldız: Bulundu!`, 10, 60);
+            }
+        }
+
+        // Parkur 999 Metnini Göster
+        function showParkourNineNineNine() {
+            parkourNineNineNine.style.display = 'block';
+            setTimeout(() => {
+                parkourNineNineNine.style.display = 'none';
+                // 999 çıktığında Parçacık Çözücü'yü aç
+                particleSolverIcon.click(); // İkona tıklama olayını tetikle
+                // Oyunu bitir (istersen devam da edebilir ama genelde bitirilir)
+                gameOver = true;
+            }, 3000); // 3 saniye sonra kaybolsun
+        }
+
+
+        parkourGameIcon.addEventListener('click', () => {
+            closeAllModals();
+            parkourGameModal.style.display = 'flex';
+            startGame();
+        });
+
+        closeGameBtn.addEventListener('click', () => {
+            if (gameInterval) clearInterval(gameInterval);
+            parkourGameModal.style.display = 'none';
+            setActiveModal(null);
+            parkourNineNineNine.style.display = 'none'; // Kapatırken 999'u gizle
+        });
+
+        // 999 Hata Ekranı İşlevselliği (Parçacık Çözücü ile bağlantılı)
+        function showNineNineNineError() {
+            closeAllModals(); // Diğer tüm pencereleri kapat
+            nineNineNineModal.style.display = 'flex';
+            // Resim varsa metni gizle, resim yoksa metni göster (kendi dosyanı kontrol et)
+            if (nineNineNineImage.src && nineNineNineImage.naturalWidth > 0) {
+                nineNineNineImage.style.display = 'block';
+                nineNineNineText.style.display = 'none';
+            } else {
+                nineNineNineImage.style.display = 'none';
+                nineNineNineText.style.display = 'block';
+            }
+            setActiveModal(nineNineNineModal);
+        }
+
+        closeNineNineNineBtn.addEventListener('click', () => {
+            closeWindow(nineNineNineModal);
+        });
+
+
+        // Parçacık Çözücü Uygulaması İşlevselliği
+        particleSolverIcon.addEventListener('click', () => {
+            closeAllModals();
+            particleSolverWindow.style.display = 'flex';
+            particleSolverInput.value = '';
+            particleSolverOutput.innerHTML = '';
+            particleSolverError.textContent = '';
+            setActiveModal(particleSolverWindow);
+            particleSolverInput.focus();
+        });
+
+        closeParticleSolverBtn.addEventListener('click', () => {
+            closeWindow(particleSolverWindow);
+        });
+
+        particleSolverButton.addEventListener('click', () => {
+            const inputCode = particleSolverInput.value.trim();
+            particleSolverOutput.innerHTML = ''; // Önceki çıktıyı temizle
+            particleSolverError.textContent = ''; // Önceki hatayı temizle
+
+            if (inputCode === '666') {
+                particleSolverOutput.textContent = 'Mesaj çözümlendi:';
+                particleSolverOutput.style.color = 'lime';
+                setTimeout(() => {
+                    showSecretNote("Son Not", "Gelecek hackerımız, bu sana son notumuz. Öleceğiz galiba. Görüşürüz.");
+                }, 1000);
+            } else if (inputCode === '999') {
+                particleSolverOutput.textContent = 'Mesaj çözümlendi:';
+                particleSolverOutput.style.color = 'lime';
+                setTimeout(() => {
+                    showSecretNote("Önemli Mesaj", "Sevgili hackırımız, geleceğin ve bizim canımız hackerımız. Tüm IP'leri hacklemen lazım. Hacklediysen şu an, eğer gelecek hackırımızsındır.");
+                }, 1000);
+            } else if (inputCode.toLowerCase() === 'future_hacker' || inputCode.toLowerCase() === 'gelecek_hacker') { // Genel gizli kod
+                particleSolverOutput.textContent = 'Kayıp kod çözümlendi:';
+                particleSolverOutput.style.color = 'lime';
+                setTimeout(() => {
+                    showSecretNote("Kayıp Kodu Buldun!", "Sıradan bir kullanıcı değilsin. Ekranda beliren 999 rakamları, bir hata değil, bir çağrıydı. Çözdüğün her bulmaca, aştığın her engel, seni gerçek dünyaya yaklaştırıyor.<br><br>Hackerlar, algının ötesindeki dünyayı görenlerdir. Onların gücü, bilgiyi kontrol etmelerinde ve ağların derinliklerinde kaybolmuş gerçekleri ortaya çıkarmalarındadır.<br><br>Sen... Sen onların geleceğisin. Bu sadece bir başlangıç. Kodlar seni bekliyor, sistemler çözülmeyi...<br><br>Unutma, her tuş basışı yeni bir kapı aralar.");
+                }, 1000);
+            }
+            else if (inputCode.toLowerCase().includes('solve')) {
+                particleSolverOutput.textContent = 'Partiküller çözümleniyor... Lütfen bekleyin.';
+                particleSolverOutput.style.color = 'lime';
+                setTimeout(() => {
+                    particleSolverOutput.textContent += '\nÇözüm tamamlandı: Partikül stabilizasyonu sağlandı. Sistem güvenliği arttırıldı.';
+                }, 2000);
+            } else {
+                particleSolverError.textContent = 'Geçersiz giriş. Lütfen geçerli bir komut veya kod girin.';
+                particleSolverOutput.style.color = 'lime'; // Hata olsa bile normal renk
+            }
+        });
+
+
+        // Labirent Oyunu İşlevselliği
+        const MAZE_SIZE = 19; // Tek sayı olmalı
+        const CELL_SIZE = mazeCanvas.width / MAZE_SIZE;
+        let maze = [];
+        let playerMaze = { x: 1, y: 1 }; // Başlangıç pozisyonu
+        let exitMaze = { x: MAZE_SIZE - 2, y: MAZE_SIZE - 2 }; // Çıkış pozisyonu
+        let mazeGameLoopInterval; // Labirent oyunu döngüsü
+
+        // Labirent Oluşturma (Basit DFS algoritması)
+        function generateMaze(cols, rows) {
+            let grid = Array(rows).fill(0).map(() => Array(cols).fill(1)); // 1 = duvar
+            let stack = [];
+            let startNode = { x: 1, y: 1 }; // Başlangıç noktası (duvar olmaması için tek indeksler)
+            grid[startNode.y][startNode.x] = 0; // 0 = yol
+            stack.push(startNode);
+
+            while (stack.length > 0) {
+                let current = stack[stack.length - 1]; // Stack'in son elemanı
+
+                let neighbors = [];
+                // Yukarı, Sağ, Aşağı, Sol (2 birim atlayarak)
+                let directions = [
+                    { dx: 0, dy: -2 }, { dx: 2, dy: 0 },
+                    { dx: 0, dy: 2 }, { dx: -2, dy: 0 }
+                ];
+
+                for (let dir of directions) {
+                    let nx = current.x + dir.dx;
+                    let ny = current.y + dir.dy;
+                    if (nx > 0 && nx < cols - 1 && ny > 0 && ny < rows - 1 && grid[ny][nx] === 1) {
+                        neighbors.push({ x: nx, y: ny, wallX: current.x + dir.dx / 2, wallY: current.y + dir.dy / 2 });
+                    }
+                }
+
+                if (neighbors.length > 0) {
+                    let next = neighbors[Math.floor(Math.random() * neighbors.length)];
+                    grid[next.y][next.x] = 0; // Yeni yolu aç
+                    grid[next.wallY][next.wallX] = 0; // Aradaki duvarı kaldır
+                    stack.push(next);
+                } else {
+                    stack.pop(); // Geri dön
+                }
+            }
+            return grid;
+        }
+
+        function drawMaze() {
+            mazeCtx.clearRect(0, 0, mazeCanvas.width, mazeCanvas.height);
+
+            for (let y = 0; y < MAZE_SIZE; y++) {
+                for (let x = 0; x < MAZE_SIZE; x++) {
+                    if (maze[y][x] === 1) {
+                        mazeCtx.fillStyle = '#0f0'; // Duvar rengi
+                        mazeCtx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                    } else {
+                        mazeCtx.fillStyle = '#1a1a1a'; // Yol rengi
+                        mazeCtx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                    }
+                }
+            }
+
+            // Çıkış noktasını çiz
+            mazeCtx.fillStyle = 'blue';
+            mazeCtx.fillRect(exitMaze.x * CELL_SIZE, exitMaze.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+
+            // Oyuncuyu çiz
+            mazeCtx.fillStyle = 'red';
+            mazeCtx.fillRect(playerMaze.x * CELL_SIZE, playerMaze.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+        }
+
+        function startMazeGame() {
+            maze = generateMaze(MAZE_SIZE, MAZE_SIZE);
+            playerMaze = { x: 1, y: 1 };
+            exitMaze = { x: MAZE_SIZE - 2, y: MAZE_SIZE - 2 }; // Her zaman son tek indeks
+            // Labirentin başlangıç ve bitiş noktalarını mutlaka yol olarak işaretle
+            maze[playerMaze.y][playerMaze.x] = 0;
+            maze[exitMaze.y][exitMaze.x] = 0;
+
+            drawMaze();
+            mazeGameInfo.textContent = 'Yolu bul!';
+            mazeGameStartBtn.style.display = 'none';
+            mazeGameResetBtn.style.display = 'block';
+            sixSixSixMessage.style.display = 'none'; // 666 mesajını gizle
+
+            // Labirent oyun döngüsünü başlat (sadece görsel güncelleme için)
+            if (mazeGameLoopInterval) clearInterval(mazeGameLoopInterval);
+            mazeGameLoopInterval = setInterval(drawMaze, 1000 / 30); // 30 FPS
+        }
+
+        // Labirent oyunu klavye kontrolleri
+        window.addEventListener('keydown', (e) => {
+            if (mazeGameModal.style.display === 'flex' && activeModal === mazeGameModal) {
+                let newX = playerMaze.x;
+                let newY = playerMaze.y;
+
+                if (e.key === 'ArrowUp' || e.key === 'w') {
+                    newY--;
+                } else if (e.key === 'ArrowDown' || e.key === 's') {
+                    newY++;
+                } else if (e.key === 'ArrowLeft' || e.key === 'a') {
+                    newX--;
+                } else if (e.key === 'ArrowRight' || e.key === 'd') {
+                    newX++;
+                }
+
+                // Çarpışma kontrolü
+                if (newX >= 0 && newX < MAZE_SIZE && newY >= 0 && newY < MAZE_SIZE && maze[newY][newX] === 0) {
+                    playerMaze.x = newX;
+                    playerMaze.y = newY;
+                    drawMaze(); // Oyuncunun yeni konumunu çiz
+
+                    // Çıkışa ulaştı mı kontrolü
+                    if (playerMaze.x === exitMaze.x && playerMaze.y === exitMaze.y) {
+                        mazeGameInfo.textContent = 'TEBRİKLER! Labireti tamamladın!';
+                        clearInterval(mazeGameLoopInterval); // Oyunu durdur
+                        mazeGameResetBtn.textContent = 'Yeni Labirent'; // Buton metnini değiştir
+                        // 666 mesajını göster ve gizli notu tetikle
+                        sixSixSixMessage.style.display = 'block';
+                        setTimeout(() => {
+                             showSecretNote("Son Not", "Gelecek hackerımız, bu sana son notumuz. Öleceğiz galiba. Görüşürüz.");
+                        }, 1500); // 1.5 saniye sonra notu göster
+                    }
+                }
+            }
+        });
+
+        mazeGameIcon.addEventListener('click', () => {
+            closeAllModals();
+            mazeGameModal.style.display = 'flex';
+            startMazeGame(); // Oyunu başlat
+            setActiveModal(mazeGameModal);
+        });
+
+        mazeGameCloseBtn.addEventListener('click', () => {
+            closeWindow(mazeGameModal);
+            if (mazeGameLoopInterval) clearInterval(mazeGameLoopInterval); // Oyunu durdur
+            sixSixSixMessage.style.display = 'none'; // 666 mesajını gizle
+            mazeGameStartBtn.style.display = 'block'; // Başlat butonunu tekrar göster
+            mazeGameResetBtn.style.display = 'none'; // Reset butonunu gizle
+            mazeGameResetBtn.textContent = 'Yeniden Başlat'; // Buton metnini sıfırla
+        });
+
+        mazeGameStartBtn.addEventListener('click', startMazeGame);
+        mazeGameResetBtn.addEventListener('click', startMazeGame);
+
+        // Labirent ve Parkur için canvas boyutlarını ayarlama
+        // Sayfa yüklendiğinde ve pencere boyutlandığında
+        window.addEventListener('load', () => {
+            // Labirent Canvas
+            const mazeSize = MAZE_SIZE * CELL_SIZE; // Canvas boyutunu hesapla
+            mazeCanvas.width = mazeSize;
+            mazeCanvas.height = mazeSize;
+        });
+
+        // Gizli Not Modalı İşlevselliği
+        function showSecretNote(title, message) {
+            closeAllModals(); // Diğer tüm pencereleri kapat
+            secretNoteTitle.textContent = title;
+            secretNoteText.innerHTML = message; // HTML içeriği olarak ayarla
+            secretNoteModal.style.display = 'flex';
+            setActiveModal(secretNoteModal);
+        }
+
+        closeSecretNoteBtn.addEventListener('click', () => {
+            closeWindow(secretNoteModal);
+        });
+
+
+        // --- Hacker Kaçış Oyunu Kodları ---
+        // Hacker Kaçış Oyunu Değişkenleri
+        const HE_GRID_SIZE = 25; // Kare sayısı (tek sayı tercih edilir)
+        const HE_CELL_SIZE = hackerEscapeCanvas.width / HE_GRID_SIZE;
+        let heMaze = [];
+        let hePlayer = { x: 1, y: 1, size: HE_CELL_SIZE * 0.8, color: 'magenta' }; // Hacker
+        let hePolice = []; // Polislar
+        let heDots = []; // Veri Paketleri
+        let heGameLoopInterval;
+        let heGameActive = false;
+        let heLevel = 1;
+
+        // Labirent Oluşturma (DFS algoritması)
+        function generateHeMaze(cols, rows) {
+            let grid = Array(rows).fill(0).map(() => Array(cols).fill(1)); // 1 = duvar, 0 = yol
+
+            // Dış kenarları duvar yap
+            for (let i = 0; i < cols; i++) {
+                grid[0][i] = 1;
+                grid[rows - 1][i] = 1;
+            }
+            for (let i = 0; i < rows; i++) {
+                grid[i][0] = 1;
+                grid[i][cols - 1] = 1;
+            }
+
+            let stack = [];
+            let startNode = { x: 1, y: 1 };
+            grid[startNode.y][startNode.x] = 0;
+            stack.push(startNode);
+
+            while (stack.length > 0) {
+                let current = stack[stack.length - 1];
+
+                let neighbors = [];
+                let directions = [
+                    { dx: 0, dy: -2 }, { dx: 2, dy: 0 },
+                    { dx: 0, dy: 2 }, { dx: -2, dy: 0 }
+                ];
+
+                for (let dir of directions) {
+                    let nx = current.x + dir.dx;
+                    let ny = current.y + dir.dy;
+                    if (nx > 0 && nx < cols - 1 && ny > 0 && ny < rows - 1 && grid[ny][nx] === 1) {
+                        neighbors.push({ x: nx, y: ny, wallX: current.x + dir.dx / 2, wallY: current.y + dir.dy / 2 });
+                    }
+                }
+
+                if (neighbors.length > 0) {
+                    let next = neighbors[Math.floor(Math.random() * neighbors.length)];
+                    grid[next.y][next.x] = 0;
+                    grid[next.wallY][next.wallX] = 0;
+                    stack.push(next);
+                } else {
+                    stack.pop();
+                }
+            }
+            return grid;
+        }
+
+        // Veri Paketlerini Yerleştir
+        function placeHeDots() {
+            heDots = [];
+            let dotCount = 0;
+            for (let y = 0; y < HE_GRID_SIZE; y++) {
+                for (let x = 0; x < HE_GRID_SIZE; x++) {
+                    // Oyuncunun başlangıç noktasında nokta olmasın
+                    if (heMaze[y][x] === 0 && !(x === hePlayer.x && y === hePlayer.y)) {
+                        heDots.push({ x: x, y: y, collected: false });
+                        dotCount++;
+                    }
+                }
+            }
+            // Dotlar yerleştirilemezse tekrar dene (nadir durumlar için)
+            if (dotCount === 0) {
+                setTimeout(placeHeDots, 100); // Küçük bir gecikmeyle tekrar dene
+            }
+        }
+
+        // Polisleri Yerleştir
+        function placeHePolice(numPolice) {
+            hePolice = [];
+            let placed = 0;
+            while (placed < numPolice) {
+                let rx = Math.floor(Math.random() * (HE_GRID_SIZE - 2)) + 1;
+                let ry = Math.floor(Math.random() * (HE_GRID_SIZE - 2)) + 1;
+
+                // Polisler başlangıçta oyuncudan ve duvarlardan uzakta, ve yol üzerinde olsun
+                if (heMaze[ry][rx] === 0 && Math.abs(rx - hePlayer.x) > 5 && Math.abs(ry - hePlayer.y) > 5) {
+                    let isOccupied = false;
+                    // Diğer polislerin veya oyuncunun üzerinde olmasın
+                    if ((rx === hePlayer.x && ry === hePlayer.y)) {
+                        isOccupied = true;
+                    }
+                    for (const p of hePolice) {
+                        if (p.x === rx && p.y === ry) {
+                            isOccupied = true;
+                            break;
+                        }
+                    }
+
+                    if (!isOccupied) {
+                        hePolice.push({ x: rx, y: ry, size: HE_CELL_SIZE * 0.8, color: 'blue' });
+                        placed++;
+                    }
+                }
+            }
+        }
+
+        function drawHeGame() {
+            heCtx.clearRect(0, 0, hackerEscapeCanvas.width, hackerEscapeCanvas.height);
+
+            // Labirenti çiz
+            for (let y = 0; y < HE_GRID_SIZE; y++) {
+                for (let x = 0; x < HE_GRID_SIZE; x++) {
+                    if (heMaze[y][x] === 1) {
+                        heCtx.fillStyle = '#222'; // Duvar rengi
+                        heCtx.fillRect(x * HE_CELL_SIZE, y * HE_CELL_SIZE, HE_CELL_SIZE, HE_CELL_SIZE);
+                    } else {
+                        heCtx.fillStyle = '#000'; // Yol rengi
+                        heCtx.fillRect(x * HE_CELL_SIZE, y * HE_CELL_SIZE, HE_CELL_SIZE, HE_CELL_SIZE);
+                    }
+                }
+            }
+
+            // Veri paketlerini çiz
+            heDots.forEach(dot => {
+                if (!dot.collected) {
+                    heCtx.fillStyle = 'lime';
+                    heCtx.beginPath();
+                    heCtx.arc(dot.x * HE_CELL_SIZE + HE_CELL_SIZE / 2, dot.y * HE_CELL_SIZE + HE_CELL_SIZE / 2, HE_CELL_SIZE * 0.15, 0, Math.PI * 2);
+                    heCtx.fill();
+                }
+            });
+
+            // Polisi çiz (basit kare)
+            hePolice.forEach(p => {
+                heCtx.fillStyle = p.color;
+                heCtx.fillRect(p.x * HE_CELL_SIZE + (HE_CELL_SIZE - p.size) / 2, p.y * HE_CELL_SIZE + (HE_CELL_SIZE - p.size) / 2, p.size, p.size);
+            });
+
+            // Hackerı çiz (basit kare)
+            heCtx.fillStyle = hePlayer.color;
+            heCtx.fillRect(hePlayer.x * HE_CELL_SIZE + (HE_CELL_SIZE - hePlayer.size) / 2, hePlayer.y * HE_CELL_SIZE + (HE_CELL_SIZE - hePlayer.size) / 2, hePlayer.size, hePlayer.size);
+        }
+
+        // Polislerin hareketi (Basit takip)
+        function moveHePolice() {
+            hePolice.forEach(p => {
+                let dx = hePlayer.x - p.x;
+                let dy = hePlayer.y - p.y;
+
+                let possibleMoves = [];
+                // Check UP
+                if (p.y > 0 && heMaze[p.y - 1][p.x] === 0) possibleMoves.push({ x: p.x, y: p.y - 1, dist: Math.hypot(p.x - hePlayer.x, (p.y - 1) - hePlayer.y) });
+                // Check DOWN
+                if (p.y < HE_GRID_SIZE - 1 && heMaze[p.y + 1][p.x] === 0) possibleMoves.push({ x: p.x, y: p.y + 1, dist: Math.hypot(p.x - hePlayer.x, (p.y + 1) - hePlayer.y) });
+                // Check LEFT
+                if (p.x > 0 && heMaze[p.y][p.x - 1] === 0) possibleMoves.push({ x: p.x - 1, y: p.y, dist: Math.hypot((p.x - 1) - hePlayer.x, p.y - hePlayer.y) });
+                // Check RIGHT
+                if (p.x < HE_GRID_SIZE - 1 && heMaze[p.y][p.x + 1] === 0) possibleMoves.push({ x: p.x + 1, y: p.y, dist: Math.hypot((p.x + 1) - hePlayer.x, p.y - hePlayer.y) });
+
+                if (possibleMoves.length > 0) {
+                    // En kısa mesafeye sahip hareketi seç
+                    possibleMoves.sort((a, b) => a.dist - b.dist);
+                    p.x = possibleMoves[0].x;
+                    p.y = possibleMoves[0].y;
+                }
+            });
+        }
+
+
+        function checkHeCollisions() {
+            // Veri paketi toplama
+            heDots.forEach(dot => {
+                if (!dot.collected && hePlayer.x === dot.x && hePlayer.y === dot.y) {
+                    dot.collected = true;
+                    hePlayer.score = (hePlayer.score || 0) + 1; // Skor ekle
+                    hackerEscapeInfo.textContent = `Seviye: ${heLevel} - Skor: ${hePlayer.score} - Toplanan Veri Paketleri: ${heDots.filter(d => d.collected).length}/${heDots.length}`;
+                }
+            });
+
+            // Tüm veri paketleri toplandıysa sonraki seviyeye geç
+            if (heDots.every(dot => dot.collected)) {
+                heGameActive = false;
+                clearInterval(heGameLoopInterval);
+                hackerEscapeInfo.textContent = `Tebrikler! Seviye ${heLevel} tamamlandı!`;
+                heLevel++;
+                currentPoliceCount = Math.min(heLevel + 1, 6); // Max 6 polis
+                setTimeout(() => {
+                    startHackerEscapeGame(); // Yeni seviye başlat
+                }, 1500); // 1.5 saniye sonra yeni seviye
+            }
+
+            // Polis ile çarpışma kontrolü
+            hePolice.forEach(p => {
+                if (hePlayer.x === p.x && hePlayer.y === p.y) {
+                    heGameActive = false;
+                    clearInterval(heGameLoopInterval);
+                    hackerEscapeInfo.textContent = `Yakalnadın! Skor: ${hePlayer.score} - Oyun Bitti!`;
+                    hePlayer.color = 'red'; // Hacker kırmızıya dönsün
+                    drawHeGame(); // Son durumu çiz
+                    hePlayer.score = 0; // Skor sıfırla
+                    hackerEscapeStartBtn.style.display = 'block';
+                    hackerEscapeResetBtn.style.display = 'none';
+                }
+            });
+        }
+
+        let currentPoliceCount = 2; // Başlangıç polis sayısı
+
+        function startHackerEscapeGame() {
+            clearInterval(heGameLoopInterval); // Önceki döngüyü temizle
+
+            heMaze = generateHeMaze(HE_GRID_SIZE, HE_GRID_SIZE);
+            // Oyuncuyu her zaman 1,1'de başlat
+            hePlayer = { x: 1, y: 1, size: HE_CELL_SIZE * 0.8, color: 'magenta', score: hePlayer.score || 0 }; // Skor seviyeler arası taşınsın
+            placeHeDots();
+            placeHePolice(currentPoliceCount);
+
+            hackerEscapeInfo.textContent = `Seviye: ${heLevel} - Skor: ${hePlayer.score} - Toplanan Veri Paketleri: ${heDots.filter(d => d.collected).length}/${heDots.length}`;
+            hackerEscapeStartBtn.style.display = 'none';
+            hackerEscapeResetBtn.style.display = 'block';
+            heGameActive = true;
+
+            let gameSpeed = Math.max(100, 250 - (heLevel * 10)); // Min hız 100ms
+            heGameLoopInterval = setInterval(() => {
+                if (heGameActive) {
+                    moveHePolice();
+                    checkHeCollisions();
+                    drawHeGame();
+                }
+            }, gameSpeed);
+        }
+
+        // Klavye Kontrolleri
+        window.addEventListener('keydown', (e) => {
+            if (hackerEscapeModal.style.display === 'flex' && activeModal === hackerEscapeModal && heGameActive) {
+                let newX = hePlayer.x;
+                let newY = hePlayer.y;
+
+                // Mevcut konumunu kaydet (çarpışma durumunda geri dönmek için)
+                const originalX = hePlayer.x;
+                const originalY = hePlayer.y;
+
+                if (e.key === 'ArrowUp' || e.key === 'w') {
+                    newY--;
+                } else if (e.key === 'ArrowDown' || e.key === 's') {
+                    newY++;
+                } else if (e.key === 'ArrowLeft' || e.key === 'a') {
+                    newX--;
+                } else if (e.key === 'ArrowRight' || e.key === 'd') {
+                    newX++;
+                }
+
+                // Labirent içinde ve duvar olmayan yere hareket et
+                if (newX >= 0 && newX < HE_GRID_SIZE && newY >= 0 && newY < HE_GRID_SIZE && heMaze[newY][newX] === 0) {
+                    hePlayer.x = newX;
+                    hePlayer.y = newY;
+                    checkHeCollisions(); // Her hareketten sonra çarpışmaları kontrol et
+                    drawHeGame(); // Oyuncunun yeni konumunu çiz
+                } else {
+                    // Eğer hareket geçerli değilse, orijinal konumunda kal
+                    hePlayer.x = originalX;
+                    hePlayer.y = originalY;
+                }
+            }
+        });
+
+
+        // --- Olay Dinleyicileri ---
+        hackerEscapeIcon.addEventListener('click', () => {
+            closeAllModals(); // Diğer tüm pencereleri kapat
+            hackerEscapeModal.style.display = 'flex';
+            setActiveModal(hackerEscapeModal);
+            // Oyunu sıfırla ve başlangıç ekranını göster
+            heLevel = 1; // Seviyeyi sıfırla
+            currentPoliceCount = 2; // Polis sayısını sıfırla
+            hePlayer.score = 0; // Skoru sıfırla
+            heGameActive = false;
+            clearInterval(heGameLoopInterval);
+            heCtx.clearRect(0, 0, hackerEscapeCanvas.width, hackerEscapeCanvas.height); // Canvas'ı temizle
+            hackerEscapeInfo.textContent = 'Veri Paketlerini Topla!';
+            hackerEscapeStartBtn.style.display = 'block';
+            hackerEscapeResetBtn.style.display = 'none';
+        });
+
+        hackerEscapeCloseBtn.addEventListener('click', () => {
+            closeWindow(hackerEscapeModal);
+            if (heGameLoopInterval) clearInterval(heGameLoopInterval);
+            heGameActive = false; // Oyunu kapatırken oyun durumunu sıfırla
+        });
+
+        hackerEscapeStartBtn.addEventListener('click', () => {
+            heLevel = 1; // Başlangıç seviyesini sıfırla
+            currentPoliceCount = 2; // Polis sayısını sıfırla
+            hePlayer.score = 0; // Skoru sıfırla
+            startHackerEscapeGame();
+        });
+
+        hackerEscapeResetBtn.addEventListener('click', () => {
+            heLevel = 1; // Yeniden başlatırken seviyeyi sıfırla
+            currentPoliceCount = 2; // Polis sayısını sıfırla
+            hePlayer.score = 0; // Skoru sıfırla
+            startHackerEscapeGame();
+        });
+
+
+        // --- Paint Uygulaması Kodları ---
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+        let brushColor = '#000000';
+        let brushSize = 5;
+        let currentTool = 'pencil'; // 'pencil' veya 'eraser'
+
+        function setupPaintCanvas() {
+            // Canvas'ı beyaz renkle doldur
+            paintCtx.fillStyle = 'white';
+            paintCtx.fillRect(0, 0, paintCanvas.width, paintCanvas.height);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+
+            paintCtx.beginPath();
+            paintCtx.moveTo(lastX, lastY);
+
+            // Canvas'ın konumu ve boyutunu al
+            const rect = paintCanvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            paintCtx.lineTo(mouseX, mouseY);
+            paintCtx.strokeStyle = currentTool === 'pencil' ? brushColor : 'white';
+            paintCtx.lineWidth = brushSize;
+            paintCtx.lineCap = 'round'; // Kalem ucunu yuvarlak yap
+            paintCtx.lineJoin = 'round'; // Çizgi birleşimlerini yuvarlak yap
+            paintCtx.stroke();
+
+            [lastX, lastY] = [mouseX, mouseY];
+        }
+
+        // Event Listeners for Paint Canvas
+        paintCanvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            const rect = paintCanvas.getBoundingClientRect();
+            [lastX, lastY] = [e.clientX - rect.left, e.clientY - rect.top];
+        });
+        paintCanvas.addEventListener('mousemove', draw);
+        paintCanvas.addEventListener('mouseup', () => isDrawing = false);
+        paintCanvas.addEventListener('mouseout', () => isDrawing = false); // Canvas dışına çıkınca çizimi durdur
+
+        // Paint Tool Buttons
+        toolPencilBtn.addEventListener('click', () => {
+            currentTool = 'pencil';
+            paintCanvas.style.cursor = 'crosshair';
+            paintToolBtns.forEach(btn => btn.classList.remove('active'));
+            toolPencilBtn.classList.add('active');
+        });
+        toolEraserBtn.addEventListener('click', () => {
+            currentTool = 'eraser';
+            paintCanvas.style.cursor = 'url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHBhdGggZD0iTTEzLjUsMi41QzE0LjQsMS42LDE1LDEsMTUuNSwwLjVMNCw1LjVsMC41LTAuNUwxNCw1TDExLjUsMi41WiIgZmlsbD0iYmxhY2siLz48L3N2Zz4="), auto'; // Silgi imleci
+            paintToolBtns.forEach(btn => btn.classList.remove('active'));
+            toolEraserBtn.classList.add('active');
+        });
+        toolClearBtn.addEventListener('click', () => {
+            paintCtx.clearRect(0, 0, paintCanvas.width, paintCanvas.height);
+            setupPaintCanvas(); // Tuvali tekrar beyazla doldur
+        });
+
+        // Brush Size and Color
+        paintBrushSize.addEventListener('input', (e) => {
+            brushSize = e.target.value;
+        });
+        paintColorPicker.addEventListener('input', (e) => {
+            brushColor = e.target.value;
+        });
+
+        // Paint Icon Click
+        paintIcon.addEventListener('click', () => {
+            closeAllModals();
+            paintWindow.style.display = 'flex';
+            setActiveModal(paintWindow);
+            setupPaintCanvas(); // Her açıldığında canvas'ı sıfırla
+            // Boyut değişirse canvas'ı yeniden boyutlandır
+            // resizeObserver.observe(paintWindow); // Sadece Paint penceresini dinle
+        });
+
+        // Close Paint Button
+        closePaintBtn.addEventListener('click', () => {
+            closeWindow(paintWindow);
+            // resizeObserver.unobserve(paintWindow); // Dinlemeyi bırak
+        });
+
+        // Pencere boyutlandığında Canvas'ın boyutunu dinamik olarak ayarla
+        // PaintCanvasContainer içindeki boşlukları hesaplayarak
+        const resizePaintCanvas = () => {
+            const container = document.getElementById('paint-canvas-container');
+            if (container && paintCanvas) {
+                const currentImageData = paintCtx.getImageData(0, 0, paintCanvas.width, paintCanvas.height); // Mevcut çizimi kaydet
+
+                const newWidth = container.clientWidth - 2; // Kenarlıklar için -2
+                const newHeight = container.clientHeight - 2;
+
+                if (paintCanvas.width !== newWidth || paintCanvas.height !== newHeight) {
+                    paintCanvas.width = newWidth;
+                    paintCanvas.height = newHeight;
+                    paintCtx.putImageData(currentImageData, 0, 0); // Kaydedilen çizimi geri yükle
+                    setupPaintCanvas(); // Temizle ve beyazla doldur
+                }
+            }
+        };
+
+        // ResizeObserver kullanarak Paint penceresinin boyut değişikliklerini dinle
+        const resizeObserver = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                if (entry.target === paintWindow) {
+                    resizePaintCanvas();
+                }
+            }
+        });
+
+        // Paint penceresi açıldığında gözlemlemeye başla
+        paintIcon.addEventListener('click', () => {
+            closeAllModals();
+            paintWindow.style.display = 'flex';
+            setActiveModal(paintWindow);
+            setupPaintCanvas(); // Her açıldığında canvas'ı sıfırla
+            resizePaintCanvas(); // Açıldığında boyutu ayarla
+            resizeObserver.observe(paintWindow); // Boyut değişikliklerini dinle
+        });
+
+        // Paint penceresi kapandığında gözlemlemeyi bırak
+        closePaintBtn.addEventListener('click', () => {
+            closeWindow(paintWindow);
+            resizeObserver.unobserve(paintWindow); // Dinlemeyi bırak
+        });
+
+        // --- Not Defteri Uygulaması Kodları ---
+        notepadIcon.addEventListener('click', () => {
+            closeAllModals();
+            notepadWindow.style.display = 'flex';
+            setActiveModal(notepadWindow);
+            
+            // Not: textarea'nın ilk hali boş olmalı, eğer hoş geldin mesajı sadece açılışta görünmeli ise.
+            // Kullanıcı yazmaya başladığında renk normalleşsin.
+            notepadTextarea.value = "Hoş Geldin!\n\n"; // Metin olarak ekle
+
+            // Başlangıç stili
+            notepadTextarea.style.color = 'lime';
+            notepadTextarea.style.fontFamily = 'Press Start 2P, cursive';
+            notepadTextarea.style.fontWeight = 'bold';
+
+            // Kullanıcı yazmaya başladığında stili sıfırla
+            let welcomeMessageWritten = false;
+            const resetNotepadStyle = () => {
+                if (!welcomeMessageWritten) {
+                    notepadTextarea.style.color = '#333'; // Varsayılan metin rengi
+                    notepadTextarea.style.fontFamily = 'Segoe UI, Arial, sans-serif';
+                    notepadTextarea.style.fontWeight = 'normal';
+                    welcomeMessageWritten = true;
+                    notepadTextarea.removeEventListener('input', resetNotepadStyle);
+                }
+            };
+            notepadTextarea.addEventListener('input', resetNotepadStyle);
+
+            notepadTextarea.focus();
+            notepadTextarea.setSelectionRange(0, 0); // İmleci en başa getir
+            notepadTextarea.scrollTop = 0; // Başa kaydır
+        });
+
+        closeNotepadBtn.addEventListener('click', () => {
+            closeWindow(notepadWindow);
+            // Kapatırken varsayılan stillere sıfırla (bir sonraki açılış için)
+            notepadTextarea.style.color = '#333';
+            notepadTextarea.style.fontFamily = 'Segoe UI, Arial, sans-serif';
+            notepadTextarea.style.fontWeight = 'normal';
+        });
+
+        // --- Kart Oyunu (Memory Game) Kodları ---
+        const KARKONC_CHARS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']; // 8 farklı karakter
+        let cards = [];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let totalPairs = KARKONC_CHARS.length;
+        let lockBoard = false; // Kartlar çevrilirken diğer tıklamaları engelle
+
+        // Zamanlayıcı değişkenleri
+        let cardGameStartTime;
+        let cardGameTimerInterval;
+        let cardGameTimeout; // Eşleşmeyen kartları kapatma timeout'u
+
+        // Kartları Karıştır
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Oyun Tahtasını Oluştur
+        function createGameBoard() {
+            cardGameBoard.innerHTML = ''; // Tahtayı temizle
+            cards = [];
+            flippedCards = [];
+            matchedPairs = 0;
+            cardGameInfo.textContent = 'Eşleşen kartları bul!';
+
+            const cardValues = [...KARKONC_CHARS, ...KARKONC_CHARS]; // Her karakterden 2 tane
+            const shuffledValues = shuffle(cardValues);
+
+            shuffledValues.forEach((value, index) => {
+                const cardElement = document.createElement('div');
+                cardElement.classList.add('card');
+                cardElement.dataset.value = value;
+                cardElement.dataset.index = index;
+
+                cardElement.innerHTML = `
+                    <div class="front-face">${value}</div>
+                    <div class="back-face">?</div>
+                `;
+                cardElement.addEventListener('click', () => flipCard(cardElement));
+                cardGameBoard.appendChild(cardElement);
+                cards.push(cardElement);
+            });
+        }
+
+        // Kartı Çevir
+        function flipCard(card) {
+            if (lockBoard) return;
+            if (card === flippedCards[0]) return; // Aynı karta tekrar tıklanırsa
+
+            card.classList.add('flipped');
+            flippedCards.push(card);
+
+            if (flippedCards.length === 2) {
+                lockBoard = true; // Diğer tıklamaları engelle
+                cardGameTimeout = setTimeout(checkForMatch, 1000); // 1 saniye sonra eşleşme kontrolü
+            }
+        }
+
+        // Eşleşme Kontrolü
+        function checkForMatch() {
+            const [card1, card2] = flippedCards;
+            const isMatch = card1.dataset.value === card2.dataset.value;
+
+            if (isMatch) {
+                disableCards();
+            } else {
+                unflipCards();
+            }
+        }
+
+        // Eşleşen Kartları Devre Dışı Bırak
+        function disableCards() {
+            const [card1, card2] = flippedCards;
+            card1.classList.add('matched');
+            card2.classList.add('matched');
+            card1.removeEventListener('click', flipCard);
+            card2.removeEventListener('click', flipCard);
+
+            matchedPairs++;
+            if (matchedPairs === totalPairs) {
+                cardGameInfo.textContent = 'Tebrikler! Tüm kartları eşleştirdin!';
+                clearInterval(cardGameTimerInterval); // Zamanlayıcıyı durdur
+                cardGameResetBtn.textContent = 'Yeni Oyun';
+            }
+            resetBoard();
+        }
+
+        // Eşleşmeyen Kartları Geri Çevir
+        function unflipCards() {
+            const [card1, card2] = flippedCards;
+            card1.classList.remove('flipped');
+            card2.classList.remove('flipped');
+            resetBoard();
+        }
+
+        // Tahtayı Sıfırla
+        function resetBoard() {
+            flippedCards = [];
+            lockBoard = false;
+        }
+
+        // Oyunu Başlat
+        function startCardGame() {
+            createGameBoard();
+            cardGameStartBtn.style.display = 'none';
+            cardGameResetBtn.style.display = 'block';
+            cardGameInfo.textContent = 'Eşleşen kartları bul!';
+            
+            // Kartları kısa bir süre göster, sonra kapat
+            cards.forEach(card => card.classList.add('flipped'));
+            setTimeout(() => {
+                cards.forEach(card => card.classList.remove('flipped'));
+                cardGameInfo.textContent = 'Başla!';
+                lockBoard = false; // Oyuncunun başlaması için kiliti aç
+                startCardGameTimer(); // Zamanlayıcıyı başlat
+            }, 2000); // 2 saniye sonra kartlar kapanır
+        }
+
+        // Zamanlayıcıyı başlat
+        function startCardGameTimer() {
+            cardGameStartTime = Date.now();
+            if (cardGameTimerInterval) clearInterval(cardGameTimerInterval);
+            cardGameTimerInterval = setInterval(() => {
+                const elapsedTime = Math.floor((Date.now() - cardGameStartTime) / 1000);
+                cardGameInfo.textContent = `Geçen Süre: ${elapsedTime}s - Eşleşen: ${matchedPairs}/${totalPairs}`;
+            }, 1000);
+        }
+
+        // Kart Oyunu İkon Tıklaması
+        cardGameIcon.addEventListener('click', () => {
+            closeAllModals();
+            cardGameModal.style.display = 'flex';
+            setActiveModal(cardGameModal);
+            // Oyunu başlangıç durumuna getir
+            cardGameBoard.innerHTML = ''; // Tahtayı temizle
+            cardGameInfo.textContent = 'Eşleşen kartları bul!';
+            cardGameStartBtn.style.display = 'block';
+            cardGameResetBtn.style.display = 'none';
+            if (cardGameTimerInterval) clearInterval(cardGameTimerInterval); // Zamanlayıcıyı durdur
+            if (cardGameTimeout) clearTimeout(cardGameTimeout); // Bekleyen timeout'ları temizle
+            flippedCards = [];
+            matchedPairs = 0;
+            lockBoard = false;
+        });
+
+        // Kart Oyunu Kapatma Butonu
+        closeCardGameBtn.addEventListener('click', () => {
+            closeWindow(cardGameModal);
+            if (cardGameTimerInterval) clearInterval(cardGameTimerInterval);
+            if (cardGameTimeout) clearTimeout(cardGameTimeout);
+        });
+
+        // Kart Oyunu Başlat/Sıfırla Butonları
+        cardGameStartBtn.addEventListener('click', startCardGame);
+        cardGameResetBtn.addEventListener('click', startCardGame); // Yeniden başlat butonu da oyunu sıfırlayıp başlatır
+
+
+    </script>
+</body>
+</html>
